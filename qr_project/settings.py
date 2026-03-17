@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!*ipz#38=x@kp5#$ujv6p1^d=@yd)ei-$6-m5z!&&48ljn8z#5'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-!*ipz#38=x@kp5#$ujv6p1^d=@yd)ei-$6-m5z!&&48ljn8z#5')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 
 # Application definition
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -76,6 +78,11 @@ WSGI_APPLICATION = 'qr_project.wsgi.application'
 
 # Auth User Model
 AUTH_USER_MODEL = 'core.CustomUser'
+
+# Login / Logout Redirect Settings
+LOGIN_URL = '/admin/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -143,7 +150,54 @@ ALLOWED_QR_DOMAINS = ['yee.org.tr', 'gov.tr', 'youtube.com']
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 
 CELERY_TASK_ALWAYS_EAGER = True
+
+# ==========================================
+# ACTIVE DIRECTORY / LDAP CONFIGURATION
+# ==========================================
+# Wrap in try-except so the app doesn't crash on environments missing python-ldap (like Windows without C++ tools)
+try:
+    import ldap
+    from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
+
+    # LDAP Server URL
+    AUTH_LDAP_SERVER_URI = os.getenv('AUTH_LDAP_SERVER_URI', "ldap://DC01.yee.org.tr")
+
+    # Service account to bind to Active Directory
+    AUTH_LDAP_BIND_DN = os.getenv('AUTH_LDAP_BIND_DN', "CN=LDAP Service,OU=Service Accounts,DC=yee,DC=org,DC=tr")
+    AUTH_LDAP_BIND_PASSWORD = os.getenv('AUTH_LDAP_BIND_PASSWORD', "YeeLdapPass123!")
+
+    # Search location and filter for users
+    AUTH_LDAP_USER_SEARCH = LDAPSearch(
+        "OU=Users,DC=yee,DC=org,DC=tr",
+        ldap.SCOPE_SUBTREE,
+        "(sAMAccountName=%(user)s)"
+    )
+
+    # Map AD attributes to CustomUser model fields
+    AUTH_LDAP_USER_ATTR_MAP = {
+        "first_name": "givenName",
+        "last_name": "sn",
+        "email": "mail",
+    }
+
+    # Keep users updated on every login
+    AUTH_LDAP_ALWAYS_UPDATE_USER = True
+
+    # Backend Authentication Routing
+    AUTHENTICATION_BACKENDS = (
+        'django_auth_ldap.backend.LDAPBackend',
+        'django.contrib.auth.backends.ModelBackend',
+    )
+    
+except ImportError:
+    # If python-ldap isn't installed, fallback to standard Django Auth
+    print("WARNING: python-ldap module not found. Active Directory integration is disabled.")
+    AUTHENTICATION_BACKENDS = (
+        'django.contrib.auth.backends.ModelBackend',
+    )

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}YEE | Yeni QR Kod{% endblock %}
+
+{% block content %}
+<div class="max-w-xl w-full px-6 py-12 animate-in fade-in zoom-in-95 duration-700">
+    <div class="glass-card rounded-[3rem] p-10 md:p-14 shadow-2xl relative overflow-hidden group">
+        <!-- Ambient Liquid Glow -->
+        <div
+            class="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+        </div>
+
+        <div class="relative z-10">
+            <div class="text-center mb-10">
+                <div
+                    class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-cyan-500/20 to-teal-500/20 rounded-[2rem] shadow-[0_0_30px_rgba(6,182,212,0.15)] mb-6 border border-cyan-500/30 backdrop-blur-xl">
+                    <svg class="w-10 h-10 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4">
+                        </path>
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-black text-white tracking-tight">Yeni Bağlantı Oluştur</h2>
+                <p class="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-3">
+                    Kurumsal Yönlendirme Kaydı
+                </p>
+            </div>
+
+            <form method="post" class="space-y-8">
+                {% csrf_token %}
+
+                {% for field in form %}
+                <div class="space-y-3 relative group/field">
+                    <label for="{{ field.id_for_label }}"
+                        class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.25em] ml-1 transition-colors group-focus-within/field:text-cyan-400">
+                        {{ field.label }}
+                    </label>
+                    <div class="relative">
+                        <!-- We assume standard Django template rendering adds standard classes or we override them globally. 
+                             For safety, wrapping field in relative div ensures styling context. -->
+                        {{ field }}
+                    </div>
+                    {% if field.errors %}
+                    <div class="bg-rose-500/10 border border-rose-500/20 p-3 rounded-2xl backdrop-blur-md">
+                        {% for error in field.errors %}
+                        <p class="text-rose-400 text-xs font-bold leading-tight">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <div class="pt-6 flex flex-col space-y-4">
+                    <button type="submit"
+                        class="w-full btn-primary text-white font-black py-5 rounded-2xl shadow-xl text-lg tracking-tight hover:scale-[1.02] active:scale-[0.98]">
+                        Kaydı Tamamla ve Oluştur
+                    </button>
+                    <a href="{% url 'dashboard' %}"
+                        class="w-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-bold py-4 rounded-2xl transition-all text-center text-xs uppercase tracking-widest border border-white/10 backdrop-blur-md shadow-lg hover:shadow-xl">
+                        Vazgeç ve Geri Dön
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Injecting robust focus borders universally for the form fields here to avoid altering global base too heavily */
+    input[type="text"],
+    input[type="url"],
+    input[type="email"],
+    select,
+    textarea {
+        background-color: rgba(15, 23, 42, 0.4) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 1rem !important;
+        color: white !important;
+        padding: 1rem 1.25rem !important;
+        font-size: 0.875rem !important;
+        width: 100% !important;
+        transition: all 0.3s ease !important;
+        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2) !important;
+    }
+
+    input[type="text"]:focus,
+    input[type="url"]:focus,
+    input[type="email"]:focus,
+    select:focus,
+    textarea:focus {
+        outline: none !important;
+        border-color: rgba(6, 182, 212, 0.5) !important;
+        box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.1), inset 0 2px 4px 0 rgba(0, 0, 0, 0.2) !important;
+        background-color: rgba(15, 23, 42, 0.6) !important;
+    }
+</style>
+{% endblock %}

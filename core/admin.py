@@ -1,3 +1,5 @@
+import csv
+from django.http import HttpResponse
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.db.models.query import QuerySet
@@ -180,6 +182,30 @@ class ScanAnalyticsAdmin(admin.ModelAdmin):
     list_filter = ('qr_code__department', 'timestamp')
     search_fields = ('qr_code__title', 'qr_code__short_id', 'ip_address_hash')
     date_hierarchy = 'timestamp'
+    actions = ['export_to_csv']
+
+    def export_to_csv(self, request: HttpRequest, queryset: QuerySet) -> HttpResponse:
+        """
+        Exports selected scan logs to a CSV file.
+        """
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="yee_scan_analytics.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['QR Code Title', 'Short ID', 'IP Hash', 'User Agent', 'Timestamp'])
+        
+        for scan in queryset:
+            writer.writerow([
+                scan.qr_code.title,
+                scan.qr_code.short_id,
+                scan.ip_address_hash,
+                scan.user_agent,
+                scan.timestamp
+            ])
+            
+        return response
+    
+    export_to_csv.short_description = "Seçili Kayıtları CSV Olarak Dışa Aktar"
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         qs = super().get_queryset(request).select_related('qr_code', 'qr_code__department')

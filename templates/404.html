@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}YEE | Bağlantı Bulunamadı{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl w-full px-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div class="glass-card rounded-[3rem] p-10 md:p-16 text-center shadow-2xl relative">
+        <div class="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+
+        <!-- Warning Icon -->
+        <div
+            class="inline-flex items-center justify-center w-24 h-24 bg-amber-500/10 border border-amber-500/20 rounded-3xl mb-10 shadow-2xl backdrop-blur-xl">
+            <svg class="w-12 h-12 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                </path>
+            </svg>
+        </div>
+
+        <h2 class="text-3xl md:text-5xl font-black text-white mb-6 tracking-tight">Bağlantı Bulunamadı</h2>
+
+        <div class="space-y-6 mb-12">
+            <p class="text-lg md:text-xl text-slate-300 font-medium leading-relaxed">
+                Okuttuğunuz QR kod pasife alınmış, süresi dolmuş veya hatalı bir bağlantı içeriyor olabilir.
+            </p>
+            <div class="inline-block p-4 bg-white/5 border border-white/10 rounded-2xl">
+                <p class="text-xs text-slate-500 font-bold uppercase tracking-widest italic leading-relaxed">
+                    Güvenliğiniz için doğrulanmamış bağlantılar otomatik olarak engellenmektedir.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex flex-col space-y-4">
+            <a href="https://yee.org.tr" target="_blank"
+                class="btn-primary text-white font-bold px-10 py-5 rounded-2xl text-lg shadow-2xl text-center tracking-tight">
+                Enstitü Ana Sayfasına Dön
+            </a>
+            <a href="/"
+                class="bg-white/5 hover:bg-white/10 text-white font-bold px-10 py-4 rounded-2xl border border-white/10 backdrop-blur-md transition-all text-sm text-center uppercase tracking-widest">
+                Ana Sayfa
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

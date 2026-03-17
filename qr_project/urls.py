@@ -19,8 +19,13 @@ from django.urls import path, include
 from core import views
 
 urlpatterns = [
+    # Override admin logout to use our custom Liquid Glass logout
+    path('admin/logout/', views.custom_logout_view, name='admin_logout_override'),
     path('admin/', admin.site.urls),
     path('', views.landing_page_view, name='landing'),
+    path('logout/', views.custom_logout_view, name='custom_logout'),
     # Root-level redirector (the core app handles /<str:short_id>/)
     path('', include('core.urls')),
 ]
+
+handler404 = 'core.views.custom_404_view'

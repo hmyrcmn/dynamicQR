@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}YEE | Yönetim Paneli{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl w-full px-6 py-8 animate-in fade-in zoom-in duration-700">
+    <!-- Dashboard Header -->
+    <div
+        class="flex flex-col md:flex-row md:items-center justify-between mb-8 space-y-4 md:space-y-0 text-center md:text-left">
+        <div>
+            <h2 class="text-2xl font-bold text-white tracking-tight">
+                Hoş Geldiniz, {{ user.get_full_name|default:user.username }}
+            </h2>
+            <p class="text-slate-400 font-medium text-xs mt-1">
+                {{ department_name }} - Kurumsal QR Gözlem Paneli
+            </p>
+        </div>
+        <a href="{% url 'qr_create' %}"
+            class="btn-primary text-white font-medium px-5 py-2.5 rounded-md text-sm flex items-center justify-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>Yeni Bağlantı Oluştur</span>
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+        <div class="glass-card rounded-[2rem] p-8 flex flex-col justify-center relative overflow-hidden group">
+            <div
+                class="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+            </div>
+            <div class="relative z-10 flex items-center justify-between mb-4">
+                <p class="text-slate-300 text-xs font-bold uppercase tracking-widest">Toplam Aktif Bağlantı</p>
+                <div
+                    class="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center border border-teal-500/30">
+                    <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+                        </path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="relative z-10 text-4xl font-black text-white tracking-tight">{{ total_qr_count }}</h3>
+        </div>
+
+        <div class="glass-card rounded-[2rem] p-8 flex flex-col justify-center relative overflow-hidden group">
+            <div
+                class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+            </div>
+            <div class="relative z-10 flex items-center justify-between mb-4">
+                <p class="text-slate-300 text-xs font-bold uppercase tracking-widest">Toplam Çözümleme</p>
+                <div
+                    class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
+                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                        </path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="relative z-10 text-4xl font-black text-white tracking-tight">{{ total_scans }}</h3>
+        </div>
+    </div>
+
+    <!-- QR List Table -->
+    <div class="glass-card rounded-[2.5rem] overflow-hidden p-1">
+        <div class="bg-slate-900/40 rounded-[2.4rem] overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm whitespace-nowrap">
+                    <thead
+                        class="bg-white/5 border-b border-white/10 text-slate-300 uppercase tracking-widest text-[10px] font-bold">
+                        <tr>
+                            <th class="px-8 py-6">Başlık & Departman</th>
+                            <th class="px-8 py-6">Kısa Kod</th>
+                            <th class="px-8 py-6">Hedef URL</th>
+                            <th class="px-8 py-6 text-center">Çözümleme</th>
+                            <th class="px-8 py-6">Kayıt Tarihi</th>
+                            <th class="px-8 py-6 text-right">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for qr in qr_codes %}
+                        <tr class="hover:bg-white/5 transition-colors group">
+                            <td class="px-8 py-6">
+                                <span class="font-bold text-white block text-sm">{{ qr.title }}</span>
+                                <span class="text-[10px] font-semibold text-slate-400 mt-1 block uppercase">{{
+                                    qr.department.name }}</span>
+                            </td>
+                            <td class="px-8 py-6">
+                                <span
+                                    class="font-mono text-cyan-400 bg-cyan-500/10 px-3 py-1.5 rounded-lg text-xs border border-cyan-500/20 shadow-inner block w-max">
+                                    {{ qr.short_id }}
+                                </span>
+                            </td>
+                            <td class="px-8 py-6 max-w-[250px] truncate text-slate-300 font-medium"
+                                title="{{ qr.destination_url }}">
+                                {{ qr.destination_url }}
+                            </td>
+                            <td class="px-8 py-6 text-center">
+                                <span class="text-white font-black text-lg">{{ qr.scans.count }}</span>
+                            </td>
+                            <td class="px-8 py-6 text-slate-400 text-xs font-semibold">
+                                {{ qr.created_at|date:"d.m.Y" }}
+                            </td>
+                            <td class="px-8 py-6 text-right space-x-2">
+                                <a href="{% url 'generate_qr_image' qr.short_id %}"
+                                    class="inline-flex items-center space-x-2 px-4 py-2 border border-white/10 bg-white/5 text-slate-300 hover:bg-cyan-500 hover:text-white hover:border-cyan-400 rounded-xl transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg"
+                                    title="İndir">
+                                    <span>PNG</span>
+                                </a>
+
+                                <a href="{% url 'qr_edit' qr.short_id %}"
+                                    class="inline-flex items-center space-x-2 px-4 py-2 border border-white/10 bg-white/5 text-slate-300 hover:bg-amber-500 hover:text-white hover:border-amber-400 rounded-xl transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg"
+                                    title="Düzenle">
+                                    <span>Düzenle</span>
+                                </a>
+
+                                <a href="{% url 'qr_delete' qr.short_id %}"
+                                    class="inline-flex items-center space-x-2 px-4 py-2 border border-white/10 bg-white/5 text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-500 rounded-xl transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg"
+                                    title="Sil">
+                                    <span>Sil</span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">
+                                Henüz departmanınıza ait bir kayıt bulunmamaktadır.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
