@@ -1,92 +1,199 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-4xl w-full px-6 animate-in fade-in zoom-in duration-700">
-    <div class="glass-card rounded-[3rem] overflow-hidden shadow-2xl relative group">
-        <!-- Shine Effect -->
-        <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none"></div>
+<style>
+    .flow-panel {
+        transition: transform 420ms ease, box-shadow 420ms ease, border-color 420ms ease, background-color 420ms ease;
+    }
 
-        <div class="p-8 md:p-12 text-center relative z-10">
-            <!-- Institutional Badge -->
+    .flow-panel.is-guided {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 30px 72px rgba(18, 188, 200, 0.24), 0 0 0 1px rgba(18, 188, 200, 0.28), 0 0 0 10px rgba(18, 188, 200, 0.08);
+        border-color: rgba(18, 188, 200, 0.3);
+        background-color: rgba(255, 255, 255, 0.74);
+    }
+
+    html[data-theme="dark"] .flow-panel.is-guided {
+        box-shadow: 0 30px 72px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(18, 188, 200, 0.34), 0 0 0 10px rgba(18, 188, 200, 0.08), 0 0 42px rgba(18, 188, 200, 0.16);
+        border-color: rgba(18, 188, 200, 0.36);
+        background-color: rgba(15, 23, 42, 0.78);
+    }
+</style>
+
+<section class="flex min-h-[calc(100svh-6.25rem)] items-center px-4 py-0 md:min-h-[calc(100svh-7rem)] md:px-6 lg:px-8">
+    <div class="mx-auto max-w-5xl">
+        <div class="apple-glass-heavy relative overflow-hidden rounded-[2rem] p-5 md:px-7 md:py-7 lg:min-h-[31rem] lg:px-8 lg:py-8">
             <div
-                class="inline-flex items-center space-x-2 bg-white/5 border border-white/10 px-3 py-1 rounded-full mb-6">
-                <span class="relative flex h-2 w-2">
-                    <span
-                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-                </span>
-                <span class="text-[10px] font-bold tracking-[0.2em] text-cyan-400 uppercase">Güvenli Kurumsal
-                    Altyapı</span>
+                class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(90,218,221,0.22),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(18,188,200,0.12),transparent_30%)]">
             </div>
 
-            <h1 class="text-4xl md:text-6xl font-black tracking-tighter mb-4 text-white leading-[1.05] drop-shadow-2xl">
-                Kurumsal QR Kod<br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400">Yönetim
-                    Paneli</span>
-            </h1>
-
-            <p class="max-w-xl mx-auto text-sm md:text-base text-slate-300/90 leading-relaxed mb-8 font-medium">
-                Yunus Emre Enstitüsü resmi QR yönlendirme servisidir. Tüm bağlantılar yüksek güvenlikli kurumsal
-                altyapımız üzerinden doğrulanarak yönlendirilmektedir.
-            </p>
-
-            <div
-                class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-10">
-                <a href="/admin/"
-                    class="w-full sm:w-auto btn-primary text-white font-bold px-10 py-4 rounded-2xl text-base tracking-tight shadow-xl">
-                    Sisteme Giriş Yap
-                </a>
-                <a href="https://yee.org.tr" target="_blank"
-                    class="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white font-bold px-10 py-4 rounded-2xl border border-white/10 backdrop-blur-md transition-all text-base tracking-tight">
-                    Enstitü Ana Sayfası
-                </a>
-            </div>
-
-            <!-- Features Quick View (Single Row) -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 border-t border-white/10">
-                <div class="flex items-center space-x-3 text-left">
-                    <div
-                        class="flex-none w-10 h-10 bg-cyan-500/10 rounded-xl flex items-center justify-center border border-cyan-500/20">
-                        <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
-                            </path>
-                        </svg>
+            <div class="relative z-10 grid gap-6 lg:grid-cols-[1.02fr_0.88fr] lg:items-center">
+                <div class="text-center lg:text-left">
+                    <div class="inline-flex items-center rounded-full border border-white/70 bg-white/60 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-apple-slate/55">
+                        <span>Kurumsal Dinamik QR Paneli</span>
                     </div>
-                    <div>
-                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">KVKK Uyumlu</h4>
-                        <p class="text-[10px] text-slate-400 leading-tight">Yüksek gizlilik standartı.</p>
+
+                    <h1
+                        class="mx-auto mt-3 max-w-2xl text-3xl font-extrabold leading-tight text-apple-slate md:text-[2.8rem] sf-display lg:mx-0">
+                        QR surecini birkac adimda baslatin.
+                    </h1>
+
+                    <p class="mx-auto mt-3 max-w-xl text-sm leading-6 text-apple-slate/68 md:text-[15px] lg:mx-0">
+                        Kurumsal giristen sonra yeni baglantinizi olusturun, QR gorselini uretin ve hemen kullanmaya baslayin.
+                    </p>
+
+                    <div class="mt-5 flex flex-col items-center gap-4 py-2 sm:flex-row sm:items-center lg:justify-start">
+                        <div class="flex h-[4.75rem] w-[4.75rem] items-center justify-center rounded-[1.5rem] border border-white/70 bg-white/60 text-apple-blue shadow-[0_18px_34px_rgba(18,188,200,0.14)]">
+                            <svg class="h-9 w-9" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9"
+                                    d="M12 3l7 4v5c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V7l7-4z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9"
+                                    d="M9.75 12.25a2.25 2.25 0 114.5 0v.75h.25a.75.75 0 01.75.75v2a.75.75 0 01-.75.75h-5a.75.75 0 01-.75-.75v-2a.75.75 0 01.75-.75h.25v-.75z"></path>
+                            </svg>
+                        </div>
+                        <div class="py-1 text-center sm:text-left">
+                            <p class="text-[11px] font-extrabold uppercase tracking-[0.2em] text-apple-slate/45">Kurumsal Giris</p>
+                            <p class="mt-1.5 text-sm font-semibold text-apple-slate">Yetkili personel hesabi ile guvenli erisim.</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+                        <a href="/admin/" class="btn-brand px-6 py-3 text-sm">
+                            <span>Kurumsal Giris</span>
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        </a>
+                        <a href="#quick-flow" class="btn-muted px-6 py-3 text-sm" data-flow-trigger aria-controls="quick-flow">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>Akisi Gor</span>
+                        </a>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap justify-center gap-2 lg:justify-start">
+                        <div class="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/60 px-3 py-2 text-xs font-semibold text-apple-slate/70">
+                            <svg class="h-4 w-4 text-apple-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Kurumsal erisim</span>
+                        </div>
+                        <div class="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/60 px-3 py-2 text-xs font-semibold text-apple-slate/70">
+                            <svg class="h-4 w-4 text-apple-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>Kolay kullanim</span>
+                        </div>
+                        <div class="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/60 px-3 py-2 text-xs font-semibold text-apple-slate/70">
+                            <svg class="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h10M4 17h7"></path>
+                            </svg>
+                            <span>Tek panel</span>
+                        </div>
                     </div>
                 </div>
-                <div class="flex items-center space-x-3 text-left">
-                    <div
-                        class="flex-none w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center border border-teal-500/20">
-                        <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                            </path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Güvenli Erişim</h4>
-                        <p class="text-[10px] text-slate-400 leading-tight">Uçtan uca koruma.</p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-3 text-left">
-                    <div
-                        class="flex-none w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
-                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Maksimum Hız</h4>
-                        <p class="text-[10px] text-slate-400 leading-tight">Ultra düşük gecikme.</p>
+
+                <div id="quick-flow" class="relative">
+                    <div class="absolute -right-10 top-0 hidden h-32 w-32 rounded-full bg-apple-blue/10 blur-3xl lg:block"></div>
+                    <div class="flow-panel apple-glass relative overflow-hidden rounded-[1.5rem] p-4 md:p-5" data-flow-panel tabindex="-1">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-apple-slate">Nasil ilerlenir?</p>
+                                <p class="mt-1 text-xs uppercase tracking-[0.18em] text-apple-slate/45">Hizli rehber</p>
+                            </div>
+                            <div class="status-pill">3 adim</div>
+                        </div>
+
+                        <div class="relative mt-4 space-y-2.5">
+                            <div class="absolute left-[1.35rem] top-4 bottom-4 w-px bg-gradient-to-b from-apple-blue/35 via-apple-teal/30 to-emerald-500/25"></div>
+
+                            <div class="relative rounded-[1.2rem] border border-white/70 bg-white/60 p-3.5">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-apple-blue/10 text-apple-blue">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5.121 17.804A9 9 0 1119 12.75M15 11a3 3 0 11-6 0 3 3 0 016 0zm-8 9a7 7 0 0110 0"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0 text-left">
+                                        <p class="text-sm font-semibold text-apple-slate">Kurumsal giris yapin</p>
+                                        <p class="mt-1 text-sm leading-5 text-apple-slate/60">Yetkili hesabinizla panele erisin.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="relative rounded-[1.2rem] border border-white/70 bg-white/60 p-3.5">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-apple-teal/12 text-apple-teal">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 4v16m8-8H4"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0 text-left">
+                                        <p class="text-sm font-semibold text-apple-slate">Yeni baglanti olusturun</p>
+                                        <p class="mt-1 text-sm leading-5 text-apple-slate/60">Baslik ve hedef URL ile kayit acin.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="relative rounded-[1.2rem] border border-white/70 bg-white/60 p-3.5">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-emerald-500/12 text-emerald-600">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 3v12m0 0l4-4m-4 4l-4-4m-3 8h14"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0 text-left">
+                                        <p class="text-sm font-semibold text-apple-slate">QR gorselini indirin</p>
+                                        <p class="mt-1 text-sm leading-5 text-apple-slate/60">Hazir dosyayi hemen kullanima alin.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const trigger = document.querySelector('[data-flow-trigger]');
+        const panel = document.querySelector('[data-flow-panel]');
+
+        if (!trigger || !panel) {
+            return;
+        }
+
+        let highlightTimer;
+        let highlightFrame;
+
+        trigger.addEventListener('click', (event) => {
+            event.preventDefault();
+
+            panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            panel.classList.remove('is-guided');
+
+            window.clearTimeout(highlightTimer);
+            window.cancelAnimationFrame(highlightFrame);
+
+            highlightFrame = window.requestAnimationFrame(() => {
+                highlightFrame = window.requestAnimationFrame(() => {
+                    panel.classList.add('is-guided');
+                    panel.focus({ preventScroll: true });
+
+                    highlightTimer = window.setTimeout(() => {
+                        panel.classList.remove('is-guided');
+                    }, 3200);
+                });
+            });
+        });
+    });
+</script>
 {% endblock %}

@@ -3,94 +3,118 @@
 {% block title %}YEE | Yeni QR Kod{% endblock %}
 
 {% block content %}
-<div class="max-w-xl w-full px-6 py-12 animate-in fade-in zoom-in-95 duration-700">
-    <div class="glass-card rounded-[3rem] p-10 md:p-14 shadow-2xl relative overflow-hidden group">
-        <!-- Ambient Liquid Glow -->
-        <div
-            class="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
-        </div>
+<div class="p-6 md:p-12 flex justify-center items-start min-h-[calc(100vh-64px)] w-full">
+    <div class="max-w-2xl w-full">
 
-        <div class="relative z-10">
-            <div class="text-center mb-10">
-                <div
-                    class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-cyan-500/20 to-teal-500/20 rounded-[2rem] shadow-[0_0_30px_rgba(6,182,212,0.15)] mb-6 border border-cyan-500/30 backdrop-blur-xl">
-                    <svg class="w-10 h-10 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4">
-                        </path>
-                    </svg>
+        <!-- Breadcrumbs -->
+        <nav class="flex mb-6 text-[10px] font-semibold uppercase tracking-widest text-apple-slate/50">
+            <a href="/dashboard/" class="hover:text-apple-blue transition-colors">Yönetim Paneli</a>
+            <span class="mx-2">/</span>
+            <span class="text-apple-blue font-bold">Yeni Kayıt</span>
+        </nav>
+
+        <div
+            class="apple-glass rounded-[2.5rem] overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.06)] border border-white">
+
+            <div class="p-8 md:p-12 border-b border-black/5 bg-white/30 backdrop-blur-sm">
+                <div class="flex items-center space-x-5 mb-4">
+                    <div
+                        class="w-14 h-14 bg-gradient-to-br from-apple-blue to-apple-blue/80 rounded-2xl flex items-center justify-center text-white shadow-md shadow-apple-blue/20">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-black text-apple-slate tracking-tight sf-display">Yeni QR Kaydı</h2>
+                    </div>
                 </div>
-                <h2 class="text-3xl font-black text-white tracking-tight">Yeni Bağlantı Oluştur</h2>
-                <p class="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-3">
-                    Kurumsal Yönlendirme Kaydı
+                <p class="text-sm text-apple-slate/60 font-medium sf-text">
+                    Sistem üzerinde yönlendirilecek yeni bir bağlantı oluşturun. Hedef URL ve diğer bilgileri eksiksiz
+                    doldurunuz.
                 </p>
             </div>
 
-            <form method="post" class="space-y-8">
-                {% csrf_token %}
+            <div class="p-8 md:p-12 bg-white/40">
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
 
-                {% for field in form %}
-                <div class="space-y-3 relative group/field">
-                    <label for="{{ field.id_for_label }}"
-                        class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.25em] ml-1 transition-colors group-focus-within/field:text-cyan-400">
-                        {{ field.label }}
-                    </label>
-                    <div class="relative">
-                        <!-- We assume standard Django template rendering adds standard classes or we override them globally. 
-                             For safety, wrapping field in relative div ensures styling context. -->
-                        {{ field }}
+                    {% for field in form %}
+                    <div class="space-y-2">
+                        <label for="{{ field.id_for_label }}"
+                            class="block text-xs font-semibold text-apple-slate/70 ml-1">
+                            {{ field.label }}
+                        </label>
+                        <div class="relative group">
+                            {{ field }}
+                            {% if field.errors %}
+                            <div class="mt-2 text-rose-500 text-xs font-semibold pl-2">
+                                {% for error in field.errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if field.help_text %}
+                        <p class="text-[10px] text-apple-slate/40 ml-2 font-medium">{{ field.help_text }}</p>
+                        {% endif %}
                     </div>
-                    {% if field.errors %}
-                    <div class="bg-rose-500/10 border border-rose-500/20 p-3 rounded-2xl backdrop-blur-md">
-                        {% for error in field.errors %}
-                        <p class="text-rose-400 text-xs font-bold leading-tight">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
+                    {% endfor %}
 
-                <div class="pt-6 flex flex-col space-y-4">
-                    <button type="submit"
-                        class="w-full btn-primary text-white font-black py-5 rounded-2xl shadow-xl text-lg tracking-tight hover:scale-[1.02] active:scale-[0.98]">
-                        Kaydı Tamamla ve Oluştur
-                    </button>
-                    <a href="{% url 'dashboard' %}"
-                        class="w-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-bold py-4 rounded-2xl transition-all text-center text-xs uppercase tracking-widest border border-white/10 backdrop-blur-md shadow-lg hover:shadow-xl">
-                        Vazgeç ve Geri Dön
-                    </a>
-                </div>
-            </form>
+                    <div class="pt-8 flex flex-col sm:flex-row items-center gap-4">
+                        <button type="submit"
+                            class="w-full sm:flex-1 bg-apple-blue text-white font-semibold py-3.5 rounded-full text-base shadow-[0_8px_16px_rgba(0,122,255,0.2)] hover:scale-[1.02] hover:bg-blue-600 transition-all flex items-center justify-center space-x-2">
+                            <span>Oluştur</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        </button>
+                        <a href="{% url 'dashboard' %}"
+                            class="w-full sm:w-auto px-8 py-3.5 bg-black/5 text-apple-slate font-semibold rounded-full hover:bg-black/10 transition-all text-center text-sm">
+                            İptal
+                        </a>
+                    </div>
+                </form>
+            </div>
+
         </div>
+
     </div>
 </div>
 
 <style>
-    /* Injecting robust focus borders universally for the form fields here to avoid altering global base too heavily */
+    /* Apple Glass Inputs */
     input[type="text"],
     input[type="url"],
-    input[type="email"],
     select,
     textarea {
-        background-color: rgba(15, 23, 42, 0.4) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 1rem !important;
-        color: white !important;
-        padding: 1rem 1.25rem !important;
-        font-size: 0.875rem !important;
-        width: 100% !important;
-        transition: all 0.3s ease !important;
-        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2) !important;
+        width: 100%;
+        background-color: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid white;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        border-radius: 1rem;
+        padding: 0.875rem 1.25rem;
+        color: #1D1D1F;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        outline: none;
     }
 
-    input[type="text"]:focus,
-    input[type="url"]:focus,
-    input[type="email"]:focus,
+    input:focus,
     select:focus,
     textarea:focus {
-        outline: none !important;
-        border-color: rgba(6, 182, 212, 0.5) !important;
-        box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.1), inset 0 2px 4px 0 rgba(0, 0, 0, 0.2) !important;
-        background-color: rgba(15, 23, 42, 0.6) !important;
+        border-color: #007AFF;
+        background-color: #ffffff;
+        box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+        outline: none;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: rgba(29, 29, 31, 0.4);
     }
 </style>
 {% endblock %}

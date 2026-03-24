@@ -1,189 +1,801 @@
+﻿{% load static %}
 <!DOCTYPE html>
-<html lang="tr" class="h-full">
+<html lang="tr" class="h-full" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f4f7f8" id="theme-color-meta">
+    <link rel="icon" type="image/png" href="{% static 'img/yee-favicon.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/yee-favicon.png' %}">
     <title>{% block title %}Yunus Emre Enstitüsü | Dinamik QR{% endblock %}</title>
-    <!-- Tailwind CSS via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Premium Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
+    <script>
+        (function () {
+            const storageKey = 'dynamicqr-theme';
+            const root = document.documentElement;
+            const savedTheme = localStorage.getItem(storageKey);
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const theme = savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : systemTheme;
+            root.dataset.theme = theme;
+            root.style.colorScheme = theme;
+        })();
+    </script>
 
     <style>
         :root {
-            --brand-navy: #0f172a;
-            /* Slate 900 */
-            --brand-teal: #0f766e;
-            /* Teal 700 */
-            --brand-cyan: #0369a1;
-            /* Sky 700 */
+            --brand-ink: #10202a;
+            --brand-ink-soft: #26414b;
+            --brand-aqua: #12bcc8;
+            --brand-aqua-soft: #5adadd;
+            --brand-bg: #f4f7f8;
+            --brand-line: rgba(255, 255, 255, 0.78);
+            --ambient-start: #f9fbfb;
+            --ambient-end: #edf3f3;
+            --ambient-grid-line: rgba(16, 32, 42, 0.025);
+            --glass-bg: rgba(255, 255, 255, 0.62);
+            --glass-heavy-bg: rgba(255, 255, 255, 0.78);
+            --glass-shadow: 0 24px 70px rgba(16, 32, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+            --glass-heavy-shadow: 0 26px 80px rgba(16, 32, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+            --eyebrow-color: rgba(16, 32, 42, 0.52);
+            --muted-bg: rgba(255, 255, 255, 0.72);
+            --muted-border: rgba(16, 32, 42, 0.08);
+            --muted-hover-bg: rgba(255, 255, 255, 0.92);
+            --status-bg: rgba(255, 255, 255, 0.72);
+            --status-border: rgba(255, 255, 255, 0.84);
+            --status-color: rgba(16, 32, 42, 0.56);
+            --nav-link-color: rgba(16, 32, 42, 0.68);
+            --nav-link-hover-bg: rgba(255, 255, 255, 0.56);
+            --nav-link-active-bg: linear-gradient(135deg, rgba(18, 188, 200, 0.14), rgba(90, 218, 221, 0.1));
+            --user-chip-bg: rgba(255, 255, 255, 0.64);
+            --user-chip-border: rgba(255, 255, 255, 0.85);
+            --user-chip-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+            --scroll-thumb: rgba(16, 32, 42, 0.14);
+            --scroll-thumb-hover: rgba(16, 32, 42, 0.22);
+            --toggle-bg: rgba(255, 255, 255, 0.72);
+            --toggle-border: rgba(16, 32, 42, 0.08);
+            --toggle-color: #10202a;
+            --toggle-hover-bg: rgba(255, 255, 255, 0.92);
+            --theme-color: #f4f7f8;
+        }
+
+        html[data-theme="dark"] {
+            --brand-ink: #e7f3f4;
+            --brand-ink-soft: #a9c0c4;
+            --brand-bg: #071316;
+            --brand-line: rgba(255, 255, 255, 0.08);
+            --ambient-start: #071316;
+            --ambient-end: #091a20;
+            --ambient-grid-line: rgba(231, 243, 244, 0.04);
+            --glass-bg: rgba(8, 20, 24, 0.66);
+            --glass-heavy-bg: rgba(9, 23, 28, 0.8);
+            --glass-shadow: 0 26px 70px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            --glass-heavy-shadow: 0 28px 90px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            --eyebrow-color: rgba(231, 243, 244, 0.58);
+            --muted-bg: rgba(10, 22, 27, 0.74);
+            --muted-border: rgba(255, 255, 255, 0.08);
+            --muted-hover-bg: rgba(15, 31, 37, 0.92);
+            --status-bg: rgba(10, 22, 27, 0.76);
+            --status-border: rgba(255, 255, 255, 0.08);
+            --status-color: rgba(231, 243, 244, 0.58);
+            --nav-link-color: rgba(231, 243, 244, 0.74);
+            --nav-link-hover-bg: rgba(255, 255, 255, 0.05);
+            --nav-link-active-bg: linear-gradient(135deg, rgba(18, 188, 200, 0.2), rgba(90, 218, 221, 0.1));
+            --user-chip-bg: rgba(10, 22, 27, 0.74);
+            --user-chip-border: rgba(255, 255, 255, 0.08);
+            --user-chip-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            --scroll-thumb: rgba(231, 243, 244, 0.16);
+            --scroll-thumb-hover: rgba(231, 243, 244, 0.28);
+            --toggle-bg: rgba(10, 22, 27, 0.76);
+            --toggle-border: rgba(255, 255, 255, 0.08);
+            --toggle-color: #e7f3f4;
+            --toggle-hover-bg: rgba(15, 31, 37, 0.96);
+            --theme-color: #071316;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #020617;
-            /* Slate 950 */
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
+            font-family: 'Manrope', sans-serif;
+            background-color: var(--brand-bg);
+            color: var(--brand-ink);
+            transition: background-color 180ms ease, color 180ms ease;
         }
 
-        /* High-End Liquid Mesh Background */
-        .page-background {
+        .ambient-bg {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             z-index: -1;
-            background:
-                radial-gradient(ellipse at 0% 0%, rgba(13, 148, 136, 0.4) 0, transparent 50%),
-                radial-gradient(ellipse at 100% 0%, rgba(14, 165, 233, 0.3) 0, transparent 50%),
-                radial-gradient(ellipse at 100% 100%, rgba(15, 23, 42, 1) 0, transparent 50%),
-                radial-gradient(ellipse at 0% 100%, rgba(3, 105, 161, 0.4) 0, transparent 50%);
-            background-color: #020617;
-            filter: blur(60px);
-            opacity: 0.9;
-            animation: liquid-pulse 25s ease-in-out infinite alternate;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--ambient-start) 0%, var(--ambient-end) 100%);
+            pointer-events: none;
         }
 
-        @keyframes liquid-pulse {
+        .ambient-grid {
+            position: absolute;
+            inset: 0;
+            opacity: 0.35;
+            background-image:
+                linear-gradient(var(--ambient-grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--ambient-grid-line) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: radial-gradient(circle at center, black 30%, transparent 88%);
+        }
+
+        .ambient-orb {
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(90px);
+            opacity: 0.72;
+            animation: float 22s infinite alternate ease-in-out;
+        }
+
+        .orb-a {
+            width: 34rem;
+            height: 34rem;
+            top: -10rem;
+            left: -8rem;
+            background: rgba(90, 218, 221, 0.28);
+        }
+
+        .orb-b {
+            width: 28rem;
+            height: 28rem;
+            top: 10rem;
+            right: -8rem;
+            background: rgba(18, 188, 200, 0.2);
+            animation-delay: -6s;
+        }
+
+        .orb-c {
+            width: 26rem;
+            height: 26rem;
+            bottom: -9rem;
+            left: 24%;
+            background: rgba(14, 165, 233, 0.12);
+            animation-delay: -12s;
+        }
+
+        @keyframes float {
             0% {
-                transform: scale(1) translate(0, 0);
+                transform: translate3d(0, 0, 0) scale(1);
             }
 
             50% {
-                transform: scale(1.05) translate(2%, 2%);
+                transform: translate3d(3%, 4%, 0) scale(1.06);
             }
 
             100% {
-                transform: scale(1) translate(-2%, -1%);
+                transform: translate3d(-3%, -2%, 0) scale(0.98);
             }
         }
 
-        /* Premium Liquid Glass Card */
-        .glass-card {
-            background: rgba(15, 23, 42, 0.4);
-            /* Slate 900 with high transparency */
-            backdrop-filter: blur(48px) saturate(200%);
-            -webkit-backdrop-filter: blur(48px) saturate(200%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            /* Frosted edge */
-            box-shadow:
-                0 4px 24px -1px rgba(0, 0, 0, 0.2),
-                0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+        .apple-glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
+            border: 1px solid var(--brand-line);
+            box-shadow: var(--glass-shadow);
         }
 
-        /* Fluid Gradient Borders */
-        .glass-border-gradient {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(255, 255, 255, 0.05) 100%);
+        .apple-glass-heavy {
+            background: var(--glass-heavy-bg);
+            backdrop-filter: blur(34px) saturate(190%);
+            -webkit-backdrop-filter: blur(34px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.88);
+            box-shadow: var(--glass-heavy-shadow);
         }
 
-        /* Apple Aesthetic Button */
-        .btn-primary {
-            background: linear-gradient(135deg, rgba(14, 165, 233, 0.9) 0%, rgba(13, 148, 136, 0.9) 100%);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 16px -4px rgba(13, 148, 136, 0.3);
+        .sidebar-transition {
+            transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s ease;
         }
 
-        .btn-primary:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transform: skewX(-20deg);
-            transition: 0.5s;
+        .logo-shell {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .btn-primary:hover {
+        .brand-logo {
+            display: block;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--eyebrow-color);
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 1.9rem;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(18, 188, 200, 0), rgba(18, 188, 200, 0.62));
+        }
+
+        .btn-brand {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #12bcc8 0%, #0ea5b2 100%);
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 18px 34px rgba(18, 188, 200, 0.26);
+            transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+            font-size: 0.92rem;
+        }
+
+        .btn-brand:hover {
             transform: translateY(-1px);
-            box-shadow: 0 12px 20px -4px rgba(13, 148, 136, 0.4);
-            filter: brightness(1.1);
+            filter: brightness(1.03);
+            box-shadow: 0 22px 40px rgba(18, 188, 200, 0.32);
         }
 
-        .btn-primary:hover:before {
-            left: 150%;
+        .btn-muted {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            border-radius: 999px;
+            border: 1px solid var(--muted-border);
+            background: var(--muted-bg);
+            color: var(--brand-ink);
+            font-weight: 700;
+            transition: background-color 180ms ease, transform 180ms ease, border-color 180ms ease;
+            font-size: 0.92rem;
         }
 
-        .btn-primary:active {
-            transform: translateY(1px);
-            box-shadow: 0 4px 8px -2px rgba(13, 148, 136, 0.3);
+        .btn-muted:hover {
+            transform: translateY(-1px);
+            border-color: rgba(18, 188, 200, 0.18);
+            background: var(--muted-hover-bg);
         }
 
-        /* Custom Scrollbar */
+        .btn-logout {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.55rem;
+            border-radius: 1.25rem;
+            border: 1px solid rgba(16, 32, 42, 0.07);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(244, 247, 248, 0.92));
+            color: rgba(16, 32, 42, 0.72);
+            box-shadow: 0 12px 26px rgba(16, 32, 42, 0.05);
+            transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-1px);
+            border-color: rgba(18, 188, 200, 0.18);
+            background: linear-gradient(135deg, rgba(18, 188, 200, 0.12), rgba(90, 218, 221, 0.08));
+            color: #0f8d97;
+            box-shadow: 0 16px 30px rgba(18, 188, 200, 0.12);
+        }
+
+        html[data-theme="dark"] .btn-logout {
+            border-color: rgba(255, 255, 255, 0.08);
+            background: linear-gradient(135deg, rgba(10, 22, 27, 0.82), rgba(13, 28, 33, 0.92));
+            color: rgba(231, 243, 244, 0.76);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.16);
+        }
+
+        html[data-theme="dark"] .btn-logout:hover {
+            border-color: rgba(18, 188, 200, 0.26);
+            background: linear-gradient(135deg, rgba(18, 188, 200, 0.18), rgba(90, 218, 221, 0.1));
+            color: #8be8ec;
+            box-shadow: 0 18px 34px rgba(18, 188, 200, 0.14);
+        }
+
+        .nav-item-link {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            border-radius: 1rem;
+            padding: 0.85rem 0.95rem;
+            color: var(--nav-link-color);
+            font-size: 0.92rem;
+            font-weight: 700;
+            transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+        }
+
+        .nav-item-link:hover {
+            background: var(--nav-link-hover-bg);
+            color: var(--brand-ink);
+            transform: translateX(2px);
+        }
+
+        .nav-item-link.is-active {
+            background: var(--nav-link-active-bg);
+            color: var(--brand-ink);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            border: 1px solid var(--status-border);
+            background: var(--status-bg);
+            padding: 0.6rem 0.9rem;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--status-color);
+        }
+
+        .user-chip {
+            border-radius: 1.25rem;
+            border: 1px solid var(--user-chip-border);
+            background: var(--user-chip-bg);
+            padding: 0.9rem;
+            box-shadow: var(--user-chip-shadow);
+        }
+
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            border-radius: 999px;
+            border: 1px solid var(--toggle-border);
+            background: var(--toggle-bg);
+            color: var(--toggle-color);
+            font-size: 0.78rem;
+            font-weight: 700;
+            transition: background-color 180ms ease, transform 180ms ease, border-color 180ms ease, color 180ms ease;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-1px);
+            background: var(--toggle-hover-bg);
+        }
+
+        .theme-toggle svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .public-header-shell {
+            transition: transform 260ms ease, opacity 220ms ease;
+            will-change: transform, opacity;
+        }
+
+        .public-header-hidden {
+            transform: translateY(calc(-100% - 1rem));
+            opacity: 0;
+        }
+
+        .sf-display {
+            letter-spacing: -0.045em;
+        }
+
+        .sf-text {
+            letter-spacing: -0.02em;
+        }
+
         ::-webkit-scrollbar {
-            width: 6px;
+            width: 9px;
+            height: 9px;
         }
 
         ::-webkit-scrollbar-track {
-            background: #020617;
+            background: transparent;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
+            background: var(--scroll-thumb);
+            border-radius: 999px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
+            background: var(--scroll-thumb-hover);
+            border: 2px solid transparent;
+            background-clip: padding-box;
         }
+
+        html[data-theme="dark"] .text-apple-slate {
+            color: var(--brand-ink) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/45 {
+            color: rgba(231, 243, 244, 0.45) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/50 {
+            color: rgba(231, 243, 244, 0.5) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/20 {
+            color: rgba(231, 243, 244, 0.26) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/22 {
+            color: rgba(231, 243, 244, 0.28) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/30 {
+            color: rgba(231, 243, 244, 0.3) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/35 {
+            color: rgba(231, 243, 244, 0.35) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/40 {
+            color: rgba(231, 243, 244, 0.4) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/42 {
+            color: rgba(231, 243, 244, 0.42) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/55 {
+            color: rgba(231, 243, 244, 0.55) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/60 {
+            color: rgba(231, 243, 244, 0.6) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/65 {
+            color: rgba(231, 243, 244, 0.65) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/68 {
+            color: rgba(231, 243, 244, 0.68) !important;
+        }
+
+        html[data-theme="dark"] .text-apple-slate\/70 {
+            color: rgba(231, 243, 244, 0.7) !important;
+        }
+
+        html[data-theme="dark"] .bg-black\/5 {
+            background-color: rgba(255, 255, 255, 0.04) !important;
+        }
+
+        html[data-theme="dark"] .border-black\/5 {
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        html[data-theme="dark"] .divide-black\/5> :not([hidden])~ :not([hidden]) {
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        html[data-theme="dark"] .bg-white\/70,
+        html[data-theme="dark"] .bg-white\/60,
+        html[data-theme="dark"] .bg-white\/55,
+        html[data-theme="dark"] .bg-white\/50,
+        html[data-theme="dark"] .bg-white\/45,
+        html[data-theme="dark"] .bg-white\/40,
+        html[data-theme="dark"] .bg-white\/30 {
+            background-color: rgba(10, 22, 27, 0.74) !important;
+        }
+
+        html[data-theme="dark"] .border-white,
+        html[data-theme="dark"] .border-white\/70,
+        html[data-theme="dark"] .border-white\/60,
+        html[data-theme="dark"] .border-white\/50 {
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        html[data-theme="dark"] .shadow-inner {
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.04) !important;
+        }
+
+        html[data-theme="dark"] .hover\:bg-white:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        html[data-theme="dark"] .text-rose-500 {
+            color: #fda4af !important;
+        }
+
+        html[data-theme="dark"] .hover\:text-rose-500:hover {
+            color: #fda4af !important;
+        }
+
     </style>
 </head>
 
-<body class="flex flex-col h-full text-slate-300">
-    <div class="page-background"></div>
+<body class="min-h-screen overflow-x-hidden antialiased sf-text">
+    <div class="ambient-bg">
+        <div class="ambient-grid"></div>
+        <div class="ambient-orb orb-a"></div>
+        <div class="ambient-orb orb-b"></div>
+        <div class="ambient-orb orb-c"></div>
+    </div>
 
-    <!-- Liquid Header -->
-    <header class="flex-none z-50 border-b border-white/5 bg-slate-950/40 backdrop-blur-xl">
-        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div
-                    class="w-8 h-8 rounded-[0.7rem] bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center shadow-lg border border-white/10">
-                    <span class="text-white font-bold text-lg">Y</span>
+    {% if not user.is_authenticated %}
+    <header class="public-header-shell fixed inset-x-0 top-0 z-50 px-4 pt-3 md:px-6 lg:px-8" data-public-header>
+        <div class="mx-auto max-w-6xl apple-glass-heavy rounded-[1.75rem] px-4 py-2 shadow-[0_18px_50px_rgba(16,32,42,0.08)] md:px-5 md:py-2.5">
+            <div class="flex items-center justify-between gap-3">
+                <a href="/" class="inline-flex shrink-0 items-center">
+                    <div class="logo-shell px-2.5 py-1.5">
+                        <img src="{% static 'img/yee-logo.png' %}" alt="Yunus Emre Enstitüsü logosu"
+                            class="brand-logo h-6 md:h-7">
+                    </div>
+                </a>
+                <div class="hidden min-w-0 flex-1 justify-center md:flex">
+                    <div class="min-w-0 px-2 py-1 text-center">
+                        <p class="truncate text-[13px] font-black tracking-[0.08em] text-apple-slate sf-display">Dinamik QR Yönetim Platformu</p>
+                        <div class="mt-1 flex items-center justify-center gap-2">
+                            <span class="truncate text-[11px] font-semibold tracking-[0.04em] text-apple-slate/68">Yunus Emre Enstitüsü</span>
+                            <span class="h-1 w-1 rounded-full bg-apple-blue/20"></span>
+                            <span class="translate-y-px text-[8px] font-medium uppercase tracking-[0.3em] text-apple-slate/20">Kurumsal Kullanım</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex flex-col leading-none">
-                    <span class="text-white font-bold text-sm tracking-tight uppercase">Yunus Emre Enstitüsü</span>
-                    <span class="text-cyan-400 text-[10px] font-black tracking-widest uppercase mt-0.5">Dinamik QR
-                        Servisi</span>
-                </div>
+                <nav class="flex items-center gap-2.5">
+                    <button type="button" class="theme-toggle px-3 py-2" data-theme-toggle aria-label="Temayı değiştir">
+                        <svg data-theme-icon="light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 3v2m0 14v2m7-9h2M3 12H5m12.364 6.364 1.414 1.414M5.222 5.222l1.414 1.414m0 10.728-1.414 1.414m12.728-12.728-1.414 1.414M12 16a4 4 0 100-8 4 4 0 000 8z">
+                            </path>
+                        </svg>
+                        <svg data-theme-icon="dark" class="hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20.354 15.354A9 9 0 018.646 3.646 9 9 0 1012 21a8.96 8.96 0 008.354-5.646z">
+                            </path>
+                        </svg>
+                        <span data-theme-label class="hidden md:inline">Koyu tema</span>
+                    </button>
+                    <a href="/admin/" class="btn-brand px-4 py-2 text-sm md:px-5">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 3l7 4v5c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V7l7-4z"></path>
+                        </svg>
+                        <span>Kurumsal Giriş</span>
+                    </a>
+                </nav>
             </div>
-
-            <!-- Removed unnecessary navigation links, keeping only User controls if needed (or just admin login if completely blank is requested, but user needs to login/logout. Keeping minimum) -->
-            <nav class="hidden md:flex items-center space-x-6">
-                {% if user.is_authenticated %}
-                <a href="{% url 'custom_logout' %}"
-                    class="text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors uppercase tracking-widest">Çıkış
-                    Yap</a>
-                {% else %}
-                <a href="/admin/"
-                    class="px-4 py-1.5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-all text-white">Kurumsal
-                    Giriş</a>
-                {% endif %}
-            </nav>
         </div>
     </header>
+    {% endif %}
 
-    <!-- Main Viewport Context -->
-    <main class="flex-grow flex items-center justify-center overflow-x-hidden py-4 z-10 relative">
-        {% block content %}{% endblock %}
-    </main>
+    <div class="flex min-h-screen">
+        {% if user.is_authenticated %}
+        <aside id="sidebar"
+            class="fixed inset-y-0 left-0 z-50 m-3 w-[17rem] -translate-x-[120%] rounded-[1.75rem] apple-glass sidebar-transition lg:sticky lg:top-0 lg:m-0 lg:h-screen lg:translate-x-0 lg:self-start lg:rounded-none lg:rounded-r-[1.75rem]">
+            <div class="flex h-full flex-col p-4 lg:p-5">
+                <a href="/dashboard/" class="mb-6 block">
+                    <div class="logo-shell w-full justify-start px-3.5 py-3.5">
+                        <img src="{% static 'img/yee-logo.png' %}" alt="Yunus Emre Enstitüsü logosu"
+                            class="brand-logo h-10">
+                    </div>
+                    <div class="mt-3 px-1">
+                        <span class="eyebrow">Kurumsal erişim</span>
+                        <h1 class="mt-2.5 text-base font-semibold text-apple-slate">Dinamik QR Paneli</h1>
+                        <p class="mt-2 text-sm leading-6 text-apple-slate/60">
+                            Kısa bağlantıları yönetin, QR çıktıları üretin ve tarama görünürlüğünü tek ekrandan takip edin.
+                        </p>
+                    </div>
+                </a>
 
-    <!-- Clean Footer -->
-    <footer class="flex-none py-6 border-t border-white/5 bg-slate-950/20 backdrop-blur-lg">
-        <div class="max-w-7xl mx-auto px-6 flex items-center justify-center">
-            <p class="text-[10px] font-medium text-slate-500 uppercase tracking-widest text-center">
-                &copy; 2024 Yunus Emre Enstitüsü - Kurumsal Bilgi İşlem
-            </p>
+                <nav class="space-y-2">
+                    <a href="/dashboard/" class="nav-item-link {% if request.path == '/dashboard/' %}is-active{% endif %}">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                        <span>Genel Bakış</span>
+                    </a>
+                    <a href="{% url 'qr_create' %}"
+                        class="nav-item-link {% if request.resolver_match.url_name == 'qr_create' or request.resolver_match.url_name == 'qr_edit' or request.resolver_match.url_name == 'qr_delete' %}is-active{% endif %}">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        <span>Yeni Kayıt</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-6">
+                    <div class="user-chip">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="flex h-11 w-11 items-center justify-center rounded-full bg-apple-blue/10 text-sm font-extrabold uppercase text-apple-blue">
+                                {{ user.username|slice:":2" }}
+                            </div>
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-apple-slate">{{ user.get_full_name|default:user.username }}</p>
+                                <p class="truncate text-[11px] text-apple-slate/50">{{ user.email }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{% url 'custom_logout' %}"
+                        class="btn-logout mt-4 px-4 py-2.5 text-sm font-semibold">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                        <span>Oturumu Kapat</span>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-black/20 backdrop-blur-sm lg:hidden"
+            onclick="toggleSidebar()"></div>
+        {% endif %}
+
+        <div class="flex min-w-0 flex-1 flex-col">
+            {% if user.is_authenticated %}
+            <div class="hidden px-5 pt-3 lg:flex lg:justify-end">
+                <button type="button" class="theme-toggle px-3 py-2.5" data-theme-toggle aria-label="Temayı değiştir">
+                    <svg data-theme-icon="light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v2m0 14v2m7-9h2M3 12H5m12.364 6.364 1.414 1.414M5.222 5.222l1.414 1.414m0 10.728-1.414 1.414m12.728-12.728-1.414 1.414M12 16a4 4 0 100-8 4 4 0 000 8z">
+                        </path>
+                    </svg>
+                    <svg data-theme-icon="dark" class="hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9 9 0 1012 21a8.96 8.96 0 008.354-5.646z">
+                        </path>
+                    </svg>
+                    <span data-theme-label>Tema</span>
+                </button>
+            </div>
+            <header class="px-4 pt-3 lg:hidden">
+                <div class="apple-glass-heavy flex items-center justify-between rounded-[1.25rem] px-4 py-2.5 shadow-[0_12px_40px_rgba(16,32,42,0.08)]">
+                    <button onclick="toggleSidebar()"
+                        class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/70 text-apple-slate transition hover:bg-white">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    <a href="/dashboard/" class="logo-shell px-4 py-2.5">
+                        <img src="{% static 'img/yee-logo.png' %}" alt="Yunus Emre Enstitüsü logosu"
+                            class="brand-logo h-7">
+                    </a>
+                    <button type="button" class="theme-toggle h-11 w-11 p-0" data-theme-toggle aria-label="Temayı değiştir">
+                        <svg data-theme-icon="light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 3v2m0 14v2m7-9h2M3 12H5m12.364 6.364 1.414 1.414M5.222 5.222l1.414 1.414m0 10.728-1.414 1.414m12.728-12.728-1.414 1.414M12 16a4 4 0 100-8 4 4 0 000 8z">
+                            </path>
+                        </svg>
+                        <svg data-theme-icon="dark" class="hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20.354 15.354A9 9 0 018.646 3.646 9 9 0 1012 21a8.96 8.96 0 008.354-5.646z">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+            {% endif %}
+
+            <main class="flex-1 overflow-x-hidden {% if not user.is_authenticated %}{% if request.path == '/' %}pt-20 md:pt-24 pb-0{% else %}pt-24 md:pt-28 pb-6 md:pb-8{% endif %}{% else %}pt-3 pb-6 md:pb-8{% endif %}">
+                {% block content %}{% endblock %}
+            </main>
+
+            {% if not user.is_authenticated %}
+            {% if request.path != '/' %}
+            <footer class="px-4 pb-4 pt-2 md:px-6 md:pb-5 md:pt-3 lg:px-8">
+                <div class="mx-auto max-w-7xl">
+                    <div class="apple-glass rounded-[1.5rem] px-5 py-3 text-center">
+                        <p class="text-sm font-semibold text-apple-slate">Yunus Emre Enstitüsü</p>
+                        <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.22em] text-apple-slate/45">
+                            Dinamik QR Platformu • 2026
+                        </p>
+                    </div>
+                </div>
+            </footer>
+            {% endif %}
+            {% endif %}
         </div>
-    </footer>
+    </div>
+
+    <script>
+        const themeStorageKey = 'dynamicqr-theme';
+
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            const themeColorMeta = document.getElementById('theme-color-meta');
+            root.dataset.theme = theme;
+            root.style.colorScheme = theme;
+
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute('content', theme === 'dark' ? '#071316' : '#f4f7f8');
+            }
+
+            document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+                const label = button.querySelector('[data-theme-label]');
+                const lightIcon = button.querySelector('[data-theme-icon="light"]');
+                const darkIcon = button.querySelector('[data-theme-icon="dark"]');
+                const nextTheme = theme === 'dark' ? 'light' : 'dark';
+
+                button.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+                button.setAttribute('data-next-theme', nextTheme);
+
+                if (label) {
+                    label.textContent = theme === 'dark' ? 'Açık tema' : 'Koyu tema';
+                }
+
+                if (lightIcon) {
+                    lightIcon.classList.toggle('hidden', theme === 'dark');
+                }
+
+                if (darkIcon) {
+                    darkIcon.classList.toggle('hidden', theme !== 'dark');
+                }
+            });
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem(themeStorageKey, nextTheme);
+            applyTheme(nextTheme);
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (!sidebar || !overlay) {
+                return;
+            }
+            sidebar.classList.toggle('-translate-x-[120%]');
+            overlay.classList.toggle('hidden');
+        }
+
+        function setupPublicHeaderScroll() {
+            const header = document.querySelector('[data-public-header]');
+            if (!header) {
+                return;
+            }
+
+            let lastScrollY = window.scrollY;
+            let ticking = false;
+
+            const updateHeaderState = () => {
+                const currentScrollY = window.scrollY;
+
+                if (currentScrollY <= 24) {
+                    header.classList.remove('public-header-hidden');
+                } else if (currentScrollY > lastScrollY && currentScrollY > 80) {
+                    header.classList.add('public-header-hidden');
+                } else if (currentScrollY < lastScrollY) {
+                    header.classList.remove('public-header-hidden');
+                }
+
+                lastScrollY = currentScrollY;
+                ticking = false;
+            };
+
+            window.addEventListener('scroll', () => {
+                if (!ticking) {
+                    window.requestAnimationFrame(updateHeaderState);
+                    ticking = true;
+                }
+            }, { passive: true });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+            document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+                button.addEventListener('click', toggleTheme);
+            });
+            setupPublicHeaderScroll();
+        });
+    </script>
 </body>
 
 </html>

@@ -1,0 +1,4 @@
+templates\base.html:241: <span class="text-apple-blue font-bold text-sm uppercase">{{ user.username|slice:":2"
+templates\base.html:245: <p class="text-sm font-semibold truncate text-apple-slate">{{
+templates\dashboard.html:130: class="inline-flex items-center text-[10px] font-medium text-apple-slate/50 uppercase tracking-wides
+templates\dashboard.html:205: <span class="text-[10px] font-semibold text-apple-slate/50 uppercase tracking-widest">Kayıt Sayısı: 

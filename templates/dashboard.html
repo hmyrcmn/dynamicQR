@@ -1,142 +1,759 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}YEE | Yönetim Paneli{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl w-full px-6 py-8 animate-in fade-in zoom-in duration-700">
-    <!-- Dashboard Header -->
-    <div
-        class="flex flex-col md:flex-row md:items-center justify-between mb-8 space-y-4 md:space-y-0 text-center md:text-left">
-        <div>
-            <h2 class="text-2xl font-bold text-white tracking-tight">
-                Hoş Geldiniz, {{ user.get_full_name|default:user.username }}
-            </h2>
-            <p class="text-slate-400 font-medium text-xs mt-1">
-                {{ department_name }} - Kurumsal QR Gözlem Paneli
+<style>
+    .qr-list-intro {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.24));
+        box-shadow: 0 18px 36px rgba(16, 32, 42, 0.05);
+    }
+
+    .qr-list-intro::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at top right, rgba(18, 188, 200, 0.14), transparent 32%),
+            radial-gradient(circle at bottom left, rgba(90, 218, 221, 0.1), transparent 28%);
+        pointer-events: none;
+    }
+
+    .qr-list-intro > * {
+        position: relative;
+    }
+
+    .metric-filter-card {
+        position: relative;
+        display: block;
+        overflow: hidden;
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+    }
+
+    .metric-filter-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top right, rgba(18, 188, 200, 0.12), transparent 38%);
+        opacity: 0;
+        transition: opacity 180ms ease;
+        pointer-events: none;
+    }
+
+    .metric-filter-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 38px rgba(16, 32, 42, 0.08);
+    }
+
+    .metric-filter-card:hover::before,
+    .metric-filter-card.is-active::before {
+        opacity: 1;
+    }
+
+    .metric-filter-card.is-active {
+        border-color: rgba(18, 188, 200, 0.68);
+        background: linear-gradient(135deg, rgba(18, 188, 200, 0.16), rgba(255, 255, 255, 0.78));
+        box-shadow: 0 0 0 1px rgba(18, 188, 200, 0.24), 0 22px 42px rgba(18, 188, 200, 0.16);
+    }
+
+    .metric-filter-hint {
+        color: rgba(16, 32, 42, 0.48);
+        transition: color 180ms ease;
+    }
+
+    .metric-filter-card.is-active .metric-filter-hint {
+        color: rgba(15, 141, 151, 0.82);
+    }
+
+    .filter-reset {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 1px solid rgba(16, 32, 42, 0.08);
+        background: rgba(255, 255, 255, 0.66);
+        padding: 0.56rem 0.9rem;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(16, 32, 42, 0.58);
+        transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+    }
+
+    .filter-reset:hover {
+        transform: translateY(-1px);
+        border-color: rgba(18, 188, 200, 0.18);
+        background: rgba(255, 255, 255, 0.84);
+        color: rgba(15, 141, 151, 0.9);
+    }
+
+    .qr-soft-table {
+        border-collapse: separate;
+        border-spacing: 0 0.82rem;
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    .qr-soft-row td {
+        background: rgba(255, 255, 255, 0.46);
+        box-shadow: 0 12px 28px rgba(16, 32, 42, 0.04);
+        vertical-align: middle;
+        transition: background-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .qr-soft-row:hover td {
+        background: rgba(255, 255, 255, 0.64);
+        box-shadow: 0 16px 34px rgba(16, 32, 42, 0.08);
+    }
+
+    .qr-soft-table th,
+    .qr-soft-table td {
+        padding: 1rem 1.15rem;
+    }
+
+    .qr-soft-table th:nth-child(1),
+    .qr-soft-table td:nth-child(1) {
+        width: 34%;
+    }
+
+    .qr-soft-table th:nth-child(2),
+    .qr-soft-table td:nth-child(2) {
+        width: 14%;
+    }
+
+    .qr-soft-table th:nth-child(3),
+    .qr-soft-table td:nth-child(3) {
+        width: 28%;
+    }
+
+    .qr-soft-table th:nth-child(4),
+    .qr-soft-table td:nth-child(4) {
+        width: 10%;
+    }
+
+    .qr-soft-table th:nth-child(5),
+    .qr-soft-table td:nth-child(5) {
+        width: 14%;
+    }
+
+    .qr-soft-table tbody td:first-child > div {
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .qr-soft-table tbody td:nth-child(3) > div {
+        max-width: 100%;
+    }
+
+    .qr-soft-table tbody td:last-child > div {
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .qr-soft-table tbody td:last-child a,
+    .qr-soft-table tbody td:last-child button {
+        width: 2.25rem;
+        height: 2.25rem;
+        flex: 0 0 auto;
+    }
+
+    @media (min-width: 768px) {
+        .qr-soft-table th,
+        .qr-soft-table td {
+            padding-inline: 1.35rem;
+        }
+
+        .qr-soft-table tbody td:nth-child(3) > div {
+            max-width: 100%;
+        }
+    }
+
+    .qr-soft-row td:first-child {
+        border-radius: 1rem 0 0 1rem;
+    }
+
+    .qr-soft-row td:last-child {
+        border-radius: 0 1rem 1rem 0;
+    }
+
+    .month-ribbon {
+        --month-accent: #12bcc8;
+        --month-border: rgba(18, 188, 200, 0.12);
+        --month-bg: rgba(18, 188, 200, 0.08);
+        --month-label: #0f8d97;
+        --month-border-dark: rgba(18, 188, 200, 0.18);
+        --month-bg-dark: rgba(18, 188, 200, 0.14);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-radius: 999px;
+        border: 1px solid var(--month-border);
+        background: linear-gradient(135deg, var(--month-bg), rgba(255, 255, 255, 0.82));
+        color: var(--month-label);
+        padding: 0.42rem 0.72rem;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.54);
+    }
+
+    .month-ribbon-mark {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 999px;
+        background: var(--month-accent);
+        flex-shrink: 0;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.36);
+    }
+
+    .month-ribbon-label {
+        color: var(--month-label);
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+    }
+
+    .year-stamp {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        border: 1px solid rgba(16, 32, 42, 0.08);
+        background: rgba(255, 255, 255, 0.84);
+        padding: 0.22rem 0.52rem;
+        font-size: 0.56rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(16, 32, 42, 0.56);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
+    }
+
+    .date-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.44rem;
+        min-width: 4.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(18, 188, 200, 0.16);
+        background: linear-gradient(135deg, rgba(18, 188, 200, 0.08), rgba(255, 255, 255, 0.9));
+        padding: 0.38rem 0.7rem;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.54);
+    }
+
+    .date-chip-day {
+        font-size: 0.96rem;
+        font-weight: 800;
+        line-height: 1;
+        color: rgba(15, 141, 151, 0.92);
+    }
+
+    .date-chip-meta {
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(16, 32, 42, 0.52);
+    }
+
+    .month-ribbon[data-month="1"] {
+        --month-accent: #2563eb;
+        --month-border: rgba(37, 99, 235, 0.14);
+        --month-bg: rgba(37, 99, 235, 0.1);
+        --month-label: #1d4ed8;
+        --month-border-dark: rgba(96, 165, 250, 0.22);
+        --month-bg-dark: rgba(37, 99, 235, 0.18);
+    }
+
+    .month-ribbon[data-month="2"] {
+        --month-accent: #7c3aed;
+        --month-border: rgba(124, 58, 237, 0.14);
+        --month-bg: rgba(124, 58, 237, 0.1);
+        --month-label: #6d28d9;
+        --month-border-dark: rgba(167, 139, 250, 0.24);
+        --month-bg-dark: rgba(124, 58, 237, 0.18);
+    }
+
+    .month-ribbon[data-month="3"] {
+        --month-accent: #0f9f6e;
+        --month-border: rgba(15, 159, 110, 0.14);
+        --month-bg: rgba(15, 159, 110, 0.1);
+        --month-label: #0f8a61;
+        --month-border-dark: rgba(52, 211, 153, 0.22);
+        --month-bg-dark: rgba(15, 159, 110, 0.18);
+    }
+
+    .month-ribbon[data-month="4"] {
+        --month-accent: #ea580c;
+        --month-border: rgba(234, 88, 12, 0.14);
+        --month-bg: rgba(234, 88, 12, 0.1);
+        --month-label: #c2410c;
+        --month-border-dark: rgba(251, 146, 60, 0.22);
+        --month-bg-dark: rgba(234, 88, 12, 0.18);
+    }
+
+    .month-ribbon[data-month="5"] {
+        --month-accent: #0891b2;
+        --month-border: rgba(8, 145, 178, 0.14);
+        --month-bg: rgba(8, 145, 178, 0.1);
+        --month-label: #0e7490;
+        --month-border-dark: rgba(34, 211, 238, 0.22);
+        --month-bg-dark: rgba(8, 145, 178, 0.18);
+    }
+
+    .month-ribbon[data-month="6"] {
+        --month-accent: #65a30d;
+        --month-border: rgba(101, 163, 13, 0.14);
+        --month-bg: rgba(101, 163, 13, 0.1);
+        --month-label: #4d7c0f;
+        --month-border-dark: rgba(163, 230, 53, 0.22);
+        --month-bg-dark: rgba(101, 163, 13, 0.18);
+    }
+
+    .month-ribbon[data-month="7"] {
+        --month-accent: #db2777;
+        --month-border: rgba(219, 39, 119, 0.14);
+        --month-bg: rgba(219, 39, 119, 0.1);
+        --month-label: #be185d;
+        --month-border-dark: rgba(244, 114, 182, 0.22);
+        --month-bg-dark: rgba(219, 39, 119, 0.18);
+    }
+
+    .month-ribbon[data-month="8"] {
+        --month-accent: #d97706;
+        --month-border: rgba(217, 119, 6, 0.14);
+        --month-bg: rgba(217, 119, 6, 0.1);
+        --month-label: #b45309;
+        --month-border-dark: rgba(251, 191, 36, 0.22);
+        --month-bg-dark: rgba(217, 119, 6, 0.18);
+    }
+
+    .month-ribbon[data-month="9"] {
+        --month-accent: #0d9488;
+        --month-border: rgba(13, 148, 136, 0.14);
+        --month-bg: rgba(13, 148, 136, 0.1);
+        --month-label: #0f766e;
+        --month-border-dark: rgba(45, 212, 191, 0.22);
+        --month-bg-dark: rgba(13, 148, 136, 0.18);
+    }
+
+    .month-ribbon[data-month="10"] {
+        --month-accent: #9333ea;
+        --month-border: rgba(147, 51, 234, 0.14);
+        --month-bg: rgba(147, 51, 234, 0.1);
+        --month-label: #7e22ce;
+        --month-border-dark: rgba(192, 132, 252, 0.22);
+        --month-bg-dark: rgba(147, 51, 234, 0.18);
+    }
+
+    .month-ribbon[data-month="11"] {
+        --month-accent: #dc2626;
+        --month-border: rgba(220, 38, 38, 0.14);
+        --month-bg: rgba(220, 38, 38, 0.1);
+        --month-label: #b91c1c;
+        --month-border-dark: rgba(248, 113, 113, 0.22);
+        --month-bg-dark: rgba(220, 38, 38, 0.18);
+    }
+
+    .month-ribbon[data-month="12"] {
+        --month-accent: #0284c7;
+        --month-border: rgba(2, 132, 199, 0.14);
+        --month-bg: rgba(2, 132, 199, 0.1);
+        --month-label: #0369a1;
+        --month-border-dark: rgba(56, 189, 248, 0.22);
+        --month-bg-dark: rgba(2, 132, 199, 0.18);
+    }
+
+    html[data-theme="dark"] .qr-list-intro {
+        border-color: rgba(255, 255, 255, 0.06);
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.44));
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+    }
+
+    html[data-theme="dark"] .metric-filter-card:hover {
+        box-shadow: 0 22px 40px rgba(0, 0, 0, 0.18);
+    }
+
+    html[data-theme="dark"] .metric-filter-card.is-active {
+        border-color: rgba(90, 223, 210, 0.62);
+        background: linear-gradient(135deg, rgba(18, 188, 200, 0.2), rgba(15, 23, 42, 0.84));
+        box-shadow: 0 0 0 1px rgba(90, 223, 210, 0.18), 0 24px 44px rgba(0, 0, 0, 0.24);
+    }
+
+    html[data-theme="dark"] .metric-filter-hint {
+        color: rgba(231, 243, 244, 0.48);
+    }
+
+    html[data-theme="dark"] .metric-filter-card.is-active .metric-filter-hint {
+        color: rgba(139, 232, 236, 0.86);
+    }
+
+    html[data-theme="dark"] .filter-reset {
+        border-color: rgba(255, 255, 255, 0.08);
+        background: rgba(15, 23, 42, 0.62);
+        color: rgba(231, 243, 244, 0.58);
+    }
+
+    html[data-theme="dark"] .filter-reset:hover {
+        border-color: rgba(18, 188, 200, 0.22);
+        background: rgba(18, 188, 200, 0.12);
+        color: rgba(139, 232, 236, 0.9);
+    }
+
+    html[data-theme="dark"] .qr-soft-row td {
+        background: rgba(15, 23, 42, 0.44);
+        box-shadow: 0 16px 30px rgba(0, 0, 0, 0.16);
+    }
+
+    html[data-theme="dark"] .qr-soft-row:hover td {
+        background: rgba(15, 23, 42, 0.58);
+        box-shadow: 0 20px 38px rgba(0, 0, 0, 0.22);
+    }
+
+    html[data-theme="dark"] .month-ribbon {
+        border-color: var(--month-border-dark);
+        background: linear-gradient(135deg, var(--month-bg-dark), rgba(15, 23, 42, 0.76));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    html[data-theme="dark"] .year-stamp {
+        border-color: rgba(255, 255, 255, 0.08);
+        background: rgba(15, 23, 42, 0.74);
+        color: rgba(231, 243, 244, 0.56);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    html[data-theme="dark"] .date-chip {
+        border-color: rgba(18, 188, 200, 0.2);
+        background: linear-gradient(135deg, rgba(18, 188, 200, 0.14), rgba(15, 23, 42, 0.82));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    html[data-theme="dark"] .date-chip-day {
+        color: rgba(139, 232, 236, 0.92);
+    }
+
+    html[data-theme="dark"] .date-chip-meta {
+        color: rgba(231, 243, 244, 0.54);
+    }
+    .qr-action-btn {
+        border: 1px solid rgba(17, 163, 163, 0.26);
+        background: rgba(255, 255, 255, 0.78);
+        color: rgba(15, 23, 42, 0.62);
+        box-shadow: 0 12px 28px rgba(17, 163, 163, 0.08);
+    }
+
+    .qr-action-btn:hover {
+        border-color: rgba(17, 163, 163, 0.56);
+        background: linear-gradient(135deg, rgba(17, 163, 163, 0.16), rgba(255, 255, 255, 0.94));
+        color: rgba(17, 163, 163, 0.94);
+        box-shadow: 0 18px 34px rgba(17, 163, 163, 0.2);
+    }
+
+    .qr-action-btn:focus-visible {
+        outline: none;
+        border-color: rgba(17, 163, 163, 0.64);
+        box-shadow: 0 0 0 4px rgba(17, 163, 163, 0.14);
+    }
+
+    html[data-theme="dark"] .qr-action-btn {
+        border-color: rgba(77, 211, 198, 0.26);
+        background: rgba(15, 23, 42, 0.72);
+        color: rgba(226, 232, 240, 0.78);
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22);
+    }
+
+    html[data-theme="dark"] .qr-action-btn:hover {
+        border-color: rgba(90, 223, 210, 0.58);
+        background: linear-gradient(135deg, rgba(45, 212, 191, 0.2), rgba(15, 23, 42, 0.88));
+        color: rgba(178, 245, 237, 0.98);
+        box-shadow: 0 20px 36px rgba(13, 148, 136, 0.26);
+    }
+</style>
+<section class="mx-auto max-w-5xl space-y-5 px-4 pb-6 md:px-5 lg:px-6">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div class="max-w-2xl">
+            <span class="eyebrow">Kontrol paneli</span>
+            <h2 class="mt-3 text-2xl font-extrabold text-apple-slate md:text-[2rem] sf-display">QR Yönetimi</h2>
+            <p class="mt-2.5 text-sm leading-6 text-apple-slate/60 md:text-[15px]">
+                <span class="font-semibold text-apple-blue">{{ department_name }}</span> için bağlantıları oluşturun,
+                güncelleyin ve analiz için listeyi üst kartlardan hızla daraltın.
             </p>
         </div>
-        <a href="{% url 'qr_create' %}"
-            class="btn-primary text-white font-medium px-5 py-2.5 rounded-md text-sm flex items-center justify-center space-x-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            <span>Yeni Bağlantı Oluştur</span>
+        <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+            <div class="status-pill self-start sm:self-auto">Görünen kayıt: {{ filtered_qr_count }}</div>
+            {% if filters_active %}
+            <a href="{{ reset_filter_url }}" class="filter-reset">Tümünü Göster</a>
+            {% endif %}
+            <a href="{% url 'qr_create' %}" class="btn-brand px-6 py-3 text-sm">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span>Yeni Bağlantı</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+        <a href="{{ active_filter_url }}#qr-list"
+            class="metric-filter-card apple-glass rounded-[1.75rem] p-5 md:p-6 {% if active_filter_selected %}is-active{% endif %}">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-apple-slate/45">Aktif bağlantılar</p>
+                    <h3 class="mt-3 text-3xl font-extrabold text-apple-slate sf-display">{{ total_qr_count }}</h3>
+                </div>
+                <div class="flex h-11 w-11 items-center justify-center rounded-[1.1rem] bg-apple-blue/10 text-apple-blue">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h10M4 17h7"></path>
+                    </svg>
+                </div>
+            </div>
+            <p class="mt-3 text-sm leading-6 text-apple-slate/60">
+                Sadece yayında kalan bağlantıları listeleyerek aktif kayıtları hızlıca ayırır.
+            </p>
+            <p class="metric-filter-hint mt-4 text-[11px] font-extrabold uppercase tracking-[0.18em]">
+                {% if active_filter_selected %}Seçili{% else %}Filtre olarak aç{% endif %}
+            </p>
+        </a>
+        <a href="{{ scanned_filter_url }}#qr-list"
+            class="metric-filter-card apple-glass rounded-[1.75rem] p-5 md:p-6 {% if scanned_filter_selected %}is-active{% endif %}">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-extrabold uppercase tracking-[0.2em] text-apple-slate/45">Toplam tarama</p>
+                    <h3 class="mt-3 text-3xl font-extrabold text-apple-slate sf-display">{{ total_scans }}</h3>
+                </div>
+                <div class="flex h-11 w-11 items-center justify-center rounded-[1.1rem] bg-apple-teal/12 text-apple-teal">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3 3 7-7"></path>
+                    </svg>
+                </div>
+            </div>
+            <p class="mt-3 text-sm leading-6 text-apple-slate/60">
+                En az bir kez taranan kayıtları öne çıkarır ve analizi hızlandırır.
+            </p>
+            <p class="metric-filter-hint mt-4 text-[11px] font-extrabold uppercase tracking-[0.18em]">
+                {% if scanned_filter_selected %}Seçili{% else %}Filtre olarak aç{% endif %}
+            </p>
         </a>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div class="glass-card rounded-[2rem] p-8 flex flex-col justify-center relative overflow-hidden group">
-            <div
-                class="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+    <div id="qr-list" class="apple-glass-heavy overflow-hidden rounded-[2rem] p-3 md:p-4">
+        <div class="qr-list-intro flex flex-col gap-4 rounded-[1.75rem] px-5 py-5 md:flex-row md:items-center md:justify-between md:px-6 md:py-6">
+            <div>
+                <span class="inline-flex items-center rounded-full bg-white/55 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-apple-slate/42">
+                    {{ filter_title }}
+                </span>
+                <h3 class="text-xl font-bold text-apple-slate">Kayıtlı Bağlantılar</h3>
+                <p class="mt-2 text-sm leading-6 text-apple-slate/60">
+                    {{ filter_description }}
+                </p>
             </div>
-            <div class="relative z-10 flex items-center justify-between mb-4">
-                <p class="text-slate-300 text-xs font-bold uppercase tracking-widest">Toplam Aktif Bağlantı</p>
-                <div
-                    class="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center border border-teal-500/30">
-                    <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
-                        </path>
-                    </svg>
-                </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="status-pill">{{ filter_title }} • {{ filtered_qr_count }}</div>
+                {% if filters_active %}
+                <a href="{{ reset_filter_url }}#qr-list" class="filter-reset">Filtreyi Temizle</a>
+                {% else %}
+                <div class="status-pill">Tüm kayıt: {{ all_qr_count }}</div>
+                {% endif %}
             </div>
-            <h3 class="relative z-10 text-4xl font-black text-white tracking-tight">{{ total_qr_count }}</h3>
         </div>
 
-        <div class="glass-card rounded-[2rem] p-8 flex flex-col justify-center relative overflow-hidden group">
-            <div
-                class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-            </div>
-            <div class="relative z-10 flex items-center justify-between mb-4">
-                <p class="text-slate-300 text-xs font-bold uppercase tracking-widest">Toplam Çözümleme</p>
-                <div
-                    class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
-                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                        </path>
-                    </svg>
-                </div>
-            </div>
-            <h3 class="relative z-10 text-4xl font-black text-white tracking-tight">{{ total_scans }}</h3>
+        <div class="overflow-x-auto px-1 pt-3 md:px-2 md:pt-4">
+            <table class="qr-soft-table w-full text-left">
+                <thead>
+                    <tr class="text-[10px] font-extrabold uppercase tracking-[0.18em] text-apple-slate/35">
+                        <th class="px-5 py-4 md:px-6">Bağlantı</th>
+                        <th class="px-5 py-4 md:px-6">Kod</th>
+                        <th class="px-5 py-4 md:px-6">Hedef URL</th>
+                        <th class="px-5 py-4 text-center md:px-6">Tarama</th>
+                        <th class="px-5 py-4 text-right md:px-6">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for qr in qr_codes %}
+                    <tr class="qr-soft-row group">
+                        <td class="px-5 py-4 md:px-6">
+                            <div class="flex items-start gap-3">
+                                {% ifchanged qr.created_at|date:"Y" %}
+                                <span class="year-stamp shrink-0">{{ qr.created_at|date:"Y" }}</span>
+                                {% endifchanged %}
+                                <span class="date-chip shrink-0" title="{{ qr.created_at|date:'d M Y H:i' }}">
+                                    <span class="date-chip-day">{{ qr.created_at|date:"d" }}</span>
+                                    <span class="date-chip-meta">{{ qr.created_at|date:"M" }}</span>
+                                </span>
+                                <div class="min-w-0">
+                                    <span class="block text-sm font-semibold text-apple-slate">{{ qr.title }}</span>
+                                    <span class="mt-1 inline-flex text-[11px] font-semibold uppercase tracking-[0.16em] text-apple-slate/45">{{ qr.department.name }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-4 md:px-6">
+                            <code class="rounded-full border border-apple-blue/15 bg-apple-blue/8 px-3 py-1 text-xs font-semibold text-apple-blue">
+                                {{ qr.short_id }}
+                            </code>
+                        </td>
+                        <td class="px-5 py-4 md:px-6">
+                            <div class="max-w-[260px] truncate text-sm text-apple-slate/70" title="{{ qr.destination_url }}">
+                                {{ qr.destination_url }}
+                            </div>
+                        </td>
+                        <td class="px-5 py-4 text-center md:px-6">
+                            <span class="inline-flex min-w-14 items-center justify-center rounded-full bg-white/70 px-3 py-1 text-sm font-bold text-apple-slate shadow-sm">
+                                {{ qr.scan_count }}
+                            </span>
+                        </td>
+                        <td class="px-5 py-4 text-right md:px-6">
+                            <div class="flex items-center justify-end gap-2">
+                                <button onclick="openQRModal('{{ qr.short_id }}', '{{ qr.title|escapejs }}')"
+                                    class="qr-action-btn inline-flex h-9 w-9 items-center justify-center rounded-full transition hover:-translate-y-0.5"
+                                    title="Görüntüle">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                                <a href="{% url 'generate_qr_image' qr.short_id %}"
+                                    class="qr-action-btn inline-flex h-9 w-9 items-center justify-center rounded-full transition hover:-translate-y-0.5"
+                                    title="İndir">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                </a>
+                                <a href="{% url 'qr_edit' qr.short_id %}"
+                                    class="qr-action-btn inline-flex h-9 w-9 items-center justify-center rounded-full transition hover:-translate-y-0.5"
+                                    title="Düzenle">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </a>
+                                <a href="{% url 'qr_delete' qr.short_id %}"
+                                    class="qr-action-btn inline-flex h-9 w-9 items-center justify-center rounded-full transition hover:-translate-y-0.5"
+                                    title="Sil">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-5 py-16 text-center md:px-6">
+                            <div class="mx-auto flex max-w-sm flex-col items-center gap-4">
+                                <div class="flex h-16 w-16 items-center justify-center rounded-full border border-white bg-white/70 text-apple-slate/30">
+                                    <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-apple-slate">Henüz kayıt bulunmuyor</p>
+                                    <p class="mt-2 text-sm leading-7 text-apple-slate/60">Paneli başlatmak için ilk bağlantınızı oluşturun.</p>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
+</section>
 
-    <!-- QR List Table -->
-    <div class="glass-card rounded-[2.5rem] overflow-hidden p-1">
-        <div class="bg-slate-900/40 rounded-[2.4rem] overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm whitespace-nowrap">
-                    <thead
-                        class="bg-white/5 border-b border-white/10 text-slate-300 uppercase tracking-widest text-[10px] font-bold">
-                        <tr>
-                            <th class="px-8 py-6">Başlık & Departman</th>
-                            <th class="px-8 py-6">Kısa Kod</th>
-                            <th class="px-8 py-6">Hedef URL</th>
-                            <th class="px-8 py-6 text-center">Çözümleme</th>
-                            <th class="px-8 py-6">Kayıt Tarihi</th>
-                            <th class="px-8 py-6 text-right">İşlemler</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-white/5">
-                        {% for qr in qr_codes %}
-                        <tr class="hover:bg-white/5 transition-colors group">
-                            <td class="px-8 py-6">
-                                <span class="font-bold text-white block text-sm">{{ qr.title }}</span>
-                                <span class="text-[10px] font-semibold text-slate-400 mt-1 block uppercase">{{
-                                    qr.department.name }}</span>
-                            </td>
-                            <td class="px-8 py-6">
-                                <span
-                                    class="font-mono text-cyan-400 bg-cyan-500/10 px-3 py-1.5 rounded-lg text-xs border border-cyan-500/20 shadow-inner block w-max">
-                                    {{ qr.short_id }}
-                                </span>
-                            </td>
-                            <td class="px-8 py-6 max-w-[250px] truncate text-slate-300 font-medium"
-                                title="{{ qr.destination_url }}">
-                                {{ qr.destination_url }}
-                            </td>
-                            <td class="px-8 py-6 text-center">
-                                <span class="text-white font-black text-lg">{{ qr.scans.count }}</span>
-                            </td>
-                            <td class="px-8 py-6 text-slate-400 text-xs font-semibold">
-                                {{ qr.created_at|date:"d.m.Y" }}
-                            </td>
-                            <td class="px-8 py-6 text-right space-x-2">
-                                <a href="{% url 'generate_qr_image' qr.short_id %}"
-                                    class="inline-flex items-center space-x-2 px-4 py-2 border border-white/10 bg-white/5 text-slate-300 hover:bg-cyan-500 hover:text-white hover:border-cyan-400 rounded-xl transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg"
-                                    title="İndir">
-                                    <span>PNG</span>
-                                </a>
+<div id="qr-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+    <div id="qr-modal-backdrop" class="absolute inset-0 bg-black/35 opacity-0 backdrop-blur-sm transition-opacity"
+        onclick="closeQRModal()"></div>
 
-                                <a href="{% url 'qr_edit' qr.short_id %}"
-                                    class="inline-flex items-center space-x-2 px-4 py-2 border border-white/10 bg-white/5 text-slate-300 hover:bg-amber-500 hover:text-white hover:border-amber-400 rounded-xl transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg"
-                                    title="Düzenle">
-                                    <span>Düzenle</span>
-                                </a>
+    <div id="qr-modal-content"
+        class="apple-glass-heavy relative z-10 flex w-full max-w-sm scale-95 flex-col items-center rounded-[2.5rem] border border-white p-8 text-center opacity-0 shadow-[0_24px_80px_rgba(16,32,42,0.16)] transition-all duration-300">
+        <button onclick="closeQRModal()"
+            class="absolute right-4 top-4 rounded-full bg-white/60 p-2 text-apple-slate/40 transition hover:bg-white hover:text-apple-slate">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
 
-                                <a href="{% url 'qr_delete' qr.short_id %}"
-                                    class="inline-flex items-center space-x-2 px-4 py-2 border border-white/10 bg-white/5 text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-500 rounded-xl transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg"
-                                    title="Sil">
-                                    <span>Sil</span>
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">
-                                Henüz departmanınıza ait bir kayıt bulunmamaktadır.
-                            </td>
-                        </tr>
+        <h3 id="qr-modal-title" class="mb-6 line-clamp-2 text-xl font-bold leading-tight text-apple-slate sf-display">
+            Yükleniyor...
+        </h3>
 
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <div class="relative mb-6 flex aspect-square w-full items-center justify-center rounded-[1.75rem] border border-black/5 bg-white p-4 shadow-inner">
+            <div id="qr-modal-loader" class="absolute inset-0 flex items-center justify-center">
+                <span class="relative flex h-3 w-3">
+                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-apple-blue opacity-75"></span>
+                    <span class="relative inline-flex h-3 w-3 rounded-full bg-apple-blue"></span>
+                </span>
             </div>
+            <img id="qr-modal-img" src="" alt="QR kod" class="hidden h-full w-full rounded-xl object-contain">
+        </div>
+
+        <div class="flex w-full flex-col gap-3">
+            <a id="qr-modal-download" href="#" class="btn-brand px-6 py-3.5 text-sm">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                <span>QR Görselini İndir</span>
+            </a>
+            <button onclick="closeQRModal()" class="btn-muted px-6 py-3.5 text-sm">Kapat</button>
         </div>
     </div>
 </div>
+
+<script>
+    function openQRModal(shortId, title) {
+        const modal = document.getElementById('qr-modal');
+        const backdrop = document.getElementById('qr-modal-backdrop');
+        const content = document.getElementById('qr-modal-content');
+        const titleEl = document.getElementById('qr-modal-title');
+        const imgEl = document.getElementById('qr-modal-img');
+        const loader = document.getElementById('qr-modal-loader');
+        const downloadBtn = document.getElementById('qr-modal-download');
+
+        imgEl.classList.add('hidden');
+        loader.classList.remove('hidden');
+        titleEl.textContent = title;
+        imgEl.src = '/download-qr/' + shortId + '/?inline=1';
+        downloadBtn.href = '/download-qr/' + shortId + '/';
+
+        imgEl.onload = function () {
+            loader.classList.add('hidden');
+            imgEl.classList.remove('hidden');
+        };
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        setTimeout(() => {
+            backdrop.classList.remove('opacity-0');
+            backdrop.classList.add('opacity-100');
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeQRModal() {
+        const modal = document.getElementById('qr-modal');
+        const backdrop = document.getElementById('qr-modal-backdrop');
+        const content = document.getElementById('qr-modal-content');
+
+        backdrop.classList.remove('opacity-100');
+        backdrop.classList.add('opacity-0');
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.getElementById('qr-modal-img').src = '';
+        }, 300);
+    }
+</script>
 {% endblock %}
+

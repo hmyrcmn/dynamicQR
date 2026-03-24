@@ -39,15 +39,22 @@ class DepartmentAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         if is_super_admin(request.user):
             return qs
-        # DEPT_MANAGER can only see their own department
-        if is_dept_manager(request.user):
-            return qs.filter(id=request.user.department_id)
-        # DEPT_USER cannot see departments
         return qs.none()
 
     def has_module_permission(self, request: HttpRequest) -> bool:
-        # Only Super Admins and Dept Managers can see the Department module
-        return is_super_admin(request.user) or is_dept_manager(request.user)
+        return is_super_admin(request.user)
+
+    def has_view_permission(self, request: HttpRequest, obj=None) -> bool:
+        return is_super_admin(request.user)
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return is_super_admin(request.user)
+
+    def has_change_permission(self, request: HttpRequest, obj=None) -> bool:
+        return is_super_admin(request.user)
+
+    def has_delete_permission(self, request: HttpRequest, obj=None) -> bool:
+        return is_super_admin(request.user)
 
 
 @admin.register(CustomUser)
@@ -59,24 +66,32 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ('role', 'department', 'is_staff')
     
     fieldsets = UserAdmin.fieldsets + (
-        ('Corporate Structure', {'fields': ('department', 'role')}),
+        ('Kurumsal Yapı', {'fields': ('department', 'role')}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Corporate Structure', {'fields': ('department', 'role')}),
+        ('Kurumsal Yapı', {'fields': ('department', 'role')}),
     )
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         qs = super().get_queryset(request)
         if is_super_admin(request.user):
             return qs
-        if is_dept_manager(request.user):
-            # Manager can only see users in their own department
-            return qs.filter(department=request.user.department)
         return qs.none()
 
     def has_module_permission(self, request: HttpRequest) -> bool:
-        # DEPT_USER cannot access the User module
-        return is_super_admin(request.user) or is_dept_manager(request.user)
+        return is_super_admin(request.user)
+
+    def has_view_permission(self, request: HttpRequest, obj=None) -> bool:
+        return is_super_admin(request.user)
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return is_super_admin(request.user)
+
+    def has_change_permission(self, request: HttpRequest, obj=None) -> bool:
+        return is_super_admin(request.user)
+
+    def has_delete_permission(self, request: HttpRequest, obj=None) -> bool:
+        return is_super_admin(request.user)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """
@@ -146,20 +161,20 @@ class QRCodeAdmin(SimpleHistoryAdmin):
         if obj.pk:
             url = reverse('generate_qr_image', args=[obj.short_id])
             return format_html(
-                '<a class="button" href="{}" style="background-color: #264b5d; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none;">Download QR</a>',
+                '<a class="button" href="{}" style="background-color: #264b5d; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none;">QR İndir</a>',
                 url
             )
-        return "Save to generate"
+        return "Oluşturunca hazır olur"
     
-    download_qr_button.short_description = "QR Code Asset"
+    download_qr_button.short_description = "QR Kod Dosyası"
 
     def total_scans(self, obj):
         return obj.scans.count()
-    total_scans.short_description = "Total Scans"
+    total_scans.short_description = "Toplam Tarama"
 
     def unique_visitors(self, obj):
         return obj.scans.values('ip_address_hash').distinct().count()
-    unique_visitors.short_description = "Unique Visitors"
+    unique_visitors.short_description = "Tekil Ziyaretçi"
 
     def save_model(self, request: HttpRequest, obj: QRCode, form, change: bool) -> None:
         """

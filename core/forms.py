@@ -29,7 +29,7 @@ class QRCodeAdminForm(forms.ModelForm):
         domain = parsed_url.netloc.lower()
         
         if not domain:
-            raise forms.ValidationError("Invalid URL format. Hostname is missing.")
+            raise forms.ValidationError("Geçersiz URL formatı. Host adı eksik.")
 
         # 3. Check against whitelist
         allowed_domains = getattr(settings, 'ALLOWED_QR_DOMAINS', [])
@@ -44,9 +44,9 @@ class QRCodeAdminForm(forms.ModelForm):
 
         if not is_authorized:
             raise forms.ValidationError(
-                f"Security Error: The domain '{domain}' is not authorized for redirection. "
-                "Only corporate domains (yee.org.tr, gov.tr, etc.) are allowed. "
-                "Please contact IT for external domain whitelisting."
+                f"Güvenlik Hatası: '{domain}' alan adı yönlendirme için yetkili değil. "
+                "Sadece kurumsal alan adları (yee.org.tr, gov.tr, vb.) kabul edilmektedir. "
+                "Harici alan adlarını beyaz listeye eklemek için BT birimiyle iletişime geçin."
             )
 
         return url

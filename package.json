@@ -1,0 +1,24 @@
+{
+  "name": "dynamicqr",
+  "version": "1.0.0",
+  "description": "**DynamicQR** DynamicQR, kurum içi QR kodlarının güvenli, izlenebilir ve yönetilebilir şekilde oluşturulması ve hedef URL'lere yönlendirilmesi için geliştirilmiş bir Django uygulamasıdır. Bu README mevcut kod tabanını referans alır ve uygulamanın gerçek davranışını, akışlarını ve sınırlarını ayrıntılı şekilde açıklar.",
+  "main": "tailwind.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hmyrcmn/dynamicQR.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/hmyrcmn/dynamicQR/issues"
+  },
+  "homepage": "https://github.com/hmyrcmn/dynamicQR#readme",
+  "devDependencies": {
+    "tailwindcss": "^4.2.2"
+  }
+}

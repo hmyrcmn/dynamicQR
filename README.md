@@ -1,276 +1,740 @@
-# DynamicQR — Kurumsal Dinamik QR Yönlendirme Sistemi
+# DynamicQR
 
-Bu doküman, mevcut kod tabanını esas alarak projenin tüm bileşenlerini, işleyişini, kullanılan teknolojileri, güvenlik yaklaşımını, LDAP/AD entegrasyonunun nasıl çalışacağını, kullanıcı yaşam döngüsünü ve mevcut açıkları detaylı şekilde açıklar.
+DynamicQR, kurum icindeki dinamik QR kodlarini LDAP destekli kullanici girisi, departman bazli yetkilendirme, yonlendirme analitigi ve kurumsal yonetim paneli ile yonetmek icin gelistirilmis bir Django uygulamasidir.
 
-## 1) Proje Özeti ve Amaç
+Bu README iki amac icin yazildi:
 
-DynamicQR, kurumsal bağlantıların QR kodları üzerinden güvenli ve yönetilebilir şekilde yönlendirilmesini amaçlayan bir Django uygulamasıdır. Temel kullanım senaryosu:
+1. Bu projeyi ilk kez gorecek birisinin sistemi bastan kurup calistirabilmesi
+2. Linux sunucuda LDAP/Active Directory baglantisini gercek ortama yakin sekilde devreye alabilmesi
 
-- Kurum içindeki birimler, kendilerine ait QR kodlarını oluşturur ve yönetir.
-- Her QR kodun hedef URL’si dinamik olarak güncellenebilir.
-- QR kodlar tarandığında güvenli bir yönlendirme yapılır ve analiz kaydı tutulur.
-- Rol ve departman bazlı yetkilendirme ile erişim sınırlandırılır.
+Bu belge kod tabaninin mevcut halini referans alir. Dokumandaki akislari izleyen biri, ayni projeyi ya da benzerini bastan kurabilecek seviyede teknik cerceveye sahip olur.
 
-## 2) Hedef Kullanıcılar ve Roller
+## 1. Projenin Amaci
 
-Sistem iki ana kullanıcı tipine hizmet eder:
+Kurum icindeki birimler kendi QR kodlarini olusturur, duzenler, siler ve indirir. Her QR koda bir kisa ID atanir. Kullanici QR kodu okuttugunda sistem:
 
-- Kurum içi personel: Yönetim paneli üzerinden QR oluşturur, düzenler, siler ve kendi departmanı için raporları görür.
-- Kamu/ziyaretçi: QR kodu taradığında yalnızca yönlendirme alır.
+1. Kisa ID ile kaydi bulur
+2. Hedef URL'yi alir
+3. Taramayi analitik tablosuna kaydeder
+4. Kullaniciya hedef URL'ye 302 yonlendirme yapar
 
-Rol modeli:
+Yonetim tarafi icin temel kural:
 
-- `SUPER_ADMIN`: Tüm departman ve kullanıcıları görür, her şey üzerinde tam yetkilidir.
-- `DEPT_MANAGER`: Sadece kendi departmanındaki kullanıcı ve QR’ları yönetir.
-- `DEPT_USER`: Sadece kendi departmanındaki QR’ları görür. (Admin modülleri kısıtlıdır.)
+- LDAP ile giris yapan normal kullanici sadece kendi biriminin QR kayitlarini gorur ve yonetir
+- Tek bir Super Admin tum birimleri gorebilir ve yonetebilir
 
-## 3) Teknoloji Yığını ve Kullanım Amaçları
+## 2. Temel Ozellikler
 
-Kodda kullanılan başlıca teknolojiler ve nerede/ne için kullanıldıkları:
+- Dinamik QR olusturma, guncelleme, silme
+- PNG formatinda QR indirme
+- Kisa URL ile yonlendirme
+- Tarama analitigi kaydi
+- IP bilgisini hashleyerek KVKK/GDPR uyumlu saklama
+- Departman bazli RBAC
+- LDAP / Active Directory ile giris
+- LDAP'den `department` alanini cekip kullaniciyi yerel birime esleme
+- Tek bir global Super Admin kurali
+- Kurumsal dashboard ve landing arayuzu
 
-- **Django 6.0**
-  - MVC benzeri yapı, ORM, admin paneli ve güvenlik middleware’leri.
-  - `core/models.py`, `core/views.py`, `core/admin.py`, `core/forms.py`, `core/urls.py`.
-- **django-simple-history**
-  - QRCode modelinde değişiklik tarihçesi tutmak için.
-  - `core/models.py` (HistoricalRecords), `core/admin.py` (SimpleHistoryAdmin).
-- **qrcode**
-  - QR görseli üretmek için.
-  - `core/views.py` → `generate_qr_image_view`.
-- **nanoid**
-  - Kısa, güvenli `short_id` üretimi için.
-  - `core/utils.py` → `generate_short_id`.
-- **django-auth-ldap + python-ldap** (opsiyonel)
-  - Active Directory/LDAP entegrasyonu için.
-  - `qr_project/settings.py`, `core/signals.py`.
-- **Celery** (hazırlık var, aktif kullanım yok)
-  - Async işleme için altyapı tanımlı, fakat görevler mevcut değil.
-  - `qr_project/celery.py`.
-- **WhiteNoise**
-  - Statik dosyaları servis etmek için.
-  - `qr_project/settings.py` (middleware ve storage ayarı).
-- **Tailwind CSS (CDN)**
-  - Arayüz stilleri ve “glass” tasarım.
-  - `templates/*.html`.
-- **SQLite**
-  - Varsayılan veri tabanı.
-  - `db.sqlite3`.
+## 3. Kullanilan Teknolojiler
 
-## 4) Proje Yapısı ve Kritik Dosyalar
+- Python
+- Django
+- django-auth-ldap
+- python-ldap
+- django-simple-history
+- qrcode
+- Pillow
+- WhiteNoise
+- Gunicorn
+- Tailwind CSS
 
-- `manage.py`: Django yönetim komutları.
-- `qr_project/settings.py`: Uygulama ayarları, LDAP, cache, static.
-- `qr_project/urls.py`: Kökteki URL yönlendirmeleri.
-- `qr_project/celery.py`: Celery yapılandırması.
-- `core/models.py`: Departman, kullanıcı, QR ve analiz modelleri.
-- `core/views.py`: Landing, dashboard, QR oluşturma/düzenleme/silme, redirect, QR indirme.
-- `core/forms.py`: Domain whitelist kontrolü yapan formlar.
-- `core/admin.py`: Admin panel yetki kısıtları, CSV export, audit.
-- `core/signals.py`: LDAP login sonrası departman eşleme.
-- `core/urls.py`: App bazlı URL’ler.
-- `templates/`: Landing, dashboard, CRUD, base şablonları.
-- `verify_*.py`: Manuel doğrulama ve test scriptleri.
+## 4. Sistem Mimarisi
 
-## 5) Veri Modeli ve İlişkiler
+Sistem 4 ana parca etrafinda kurulu:
 
-Ana modeller:
+1. Kimlik dogrulama
+   LDAP aktifse kullanici AD uzerinden dogrulanir.
+2. Yetkilendirme
+   Kullanici sadece kendi `department` kayitlarini gorur.
+3. QR yonetimi
+   Dashboard uzerinden QR olusturma, guncelleme, silme ve indirme yapilir.
+4. Redirect + analytics
+   `/<short_id>/` endpoint'i hem yonlendirme hem de tarama kaydi yapar.
 
-- `Department`
-  - `name`: Departman adı.
-  - `is_active`: Aktiflik.
-- `CustomUser` (AbstractUser’dan türetilmiş)
-  - `department`: Departman FK.
-  - `role`: `SUPER_ADMIN`, `DEPT_MANAGER`, `DEPT_USER`.
-- `QRCode`
-  - `short_id`: Ana anahtar, NanoID ile üretilir.
-  - `department`: QR’ın ait olduğu departman.
-  - `created_by`: Oluşturan kullanıcı.
-  - `destination_url`: Yönlendirme hedefi.
-  - `is_active`: Aktif/pasif.
-  - `history`: simple_history ile değişiklik geçmişi.
-- `ScanAnalytics`
-  - `qr_code`: Hangi QR’ın tarandığı.
-  - `timestamp`, `ip_address_hash`, `user_agent`.
-  - `country`, `city`, `device_type` alanları ileride doldurulmak için hazır.
+Basit akis:
 
-## 6) Sistem Nasıl Çalışır (Akışlar)
+```text
+Kullanici -> /admin/login/ -> LDAP veya Django Auth
+LDAP -> kullanici bilgisi + department
+Sinyal -> Department modeline map et
+Basarili giris -> /dashboard/
+Dashboard -> kullanicinin yetkili oldugu QR kayitlari
+QR tarama -> /<short_id>/ -> analytics kaydi -> hedef URL
+```
 
-### 6.1 Landing ve Giriş Akışı
+## 5. Dizin Yapisi
 
-1. `/` landing sayfası açılır.
-2. Kullanıcı `/admin/` veya kurum SSO/LDAP ile giriş yapar.
-3. Giriş yapan kullanıcı rolüne göre yönetim ekranına erişir.
+```text
+qr_project/
+  settings.py          Django ayarlari, LDAP config, env okuma
+  urls.py              Kök URL dagitimi
+  wsgi.py              Gunicorn/WSGI giris noktasi
 
-### 6.2 QR Oluşturma Akışı
+core/
+  models.py            Department, CustomUser, QRCode, ScanAnalytics
+  views.py             Landing, dashboard, QR CRUD, redirect, QR indirme
+  forms.py             Whitelist kontrollu formlar
+  admin.py             Django admin RBAC
+  signals.py           LDAP login sonrasi department ve rol mapleme
+  urls.py              Dashboard ve kısa ID URL'leri
+  utils.py             short_id olusturma yardimcilari
 
-1. Kullanıcı `/dashboard/create/` sayfasından formu doldurur.
-2. Form, hedef URL için domain whitelist kontrolü yapar.
-3. `QRCode` kaydı oluşturulur, `created_by` ve `department` atanır.
-4. `short_id` otomatik üretilir.
+templates/
+  landing.html         Acilis ekrani
+  dashboard.html       Yonetim paneli
+  qr_create.html       QR olusturma formu
+  qr_edit.html         QR guncelleme formu
+  qr_confirm_delete.html
+  admin/login.html     Ozellestirilmis giris ekrani
 
-### 6.3 QR Yönlendirme Akışı
+static/
+  css/
+  img/
 
-1. Ziyaretçi `/ABCD1234/` gibi kısa URL’yi açar.
-2. `QRCode` aktifse bulunur.
-3. “Loop” kontrolü yapılır (kendi hostuna yönlendirme engeli).
-4. IP adresi salt ile hashlenir ve `ScanAnalytics` kaydı oluşturulur.
-5. 302 ile hedef URL’ye yönlendirilir.
+deploy/linux/
+  README.md                       Linux deploy notlari
+  dynamicqr.service.example       systemd servis ornegi
 
-### 6.4 QR Görseli İndirme
+.env.example            Ortam degiskenleri ornegi
+requirements.txt        Python bagimliliklari
+```
 
-1. `/download-qr/<short_id>/` endpoint’i çağrılır.
-2. QR kod görseli dinamik üretilir.
-3. PNG olarak indirilir.
+## 6. Veri Modeli
 
-## 7) Yetkilendirme (RBAC) ve Modül Kısıtları
+### 6.1 Department
 
-Admin panelindeki kısıtlar:
+Bir kurum birimini temsil eder.
 
-- Department yönetimi: `SUPER_ADMIN` ve `DEPT_MANAGER` görebilir.
-- User yönetimi: `SUPER_ADMIN` ve `DEPT_MANAGER` görebilir.
-- QR yönetimi: Her kullanıcı kendi departmanındaki QR’ları görür.
-- Analitik: Sadece kendi departmanına ait QR analizleri görünür.
+Alanlar:
 
-Dashboard ekranındaki kısıtlar:
+- `name`
+- `is_active`
 
-- `SUPER_ADMIN`: Tüm QR’ları görür.
-- Diğer roller: Sadece kendi departmanındaki QR’lar.
-- Düzenleme ve silme işlemlerinde departman kontrolü yapılır.
+### 6.2 CustomUser
 
-## 8) LDAP / Active Directory Entegrasyonu (Mevcut Kod Davranışı)
+`AbstractUser`'dan turetilmistir.
 
-LDAP entegrasyonu opsiyonel olarak yapılandırılmıştır ve python-ldap yüklüyse aktif olur.
+Ek alanlar:
 
-### 8.1 Aktif Olduğunda Neler Olur
+- `department`
+- `role`
 
-1. Django authentication backend sırasına LDAP backend eklenir.
-2. Kullanıcı AD’de doğrulanır.
-3. AD kullanıcı bilgileri `first_name`, `last_name`, `email` alanlarına eşlenir.
-4. `core.signals.map_ldap_user_to_department` sinyali tetiklenir.
-5. Kullanıcının AD `department` attribute’u okunur.
-6. Bu departman adıyla yerel `Department` kaydı bulunur veya oluşturulur.
-7. Kullanıcı otomatik olarak bu departmana atanır.
-8. Rolü yoksa varsayılan `DEPT_USER` atanır.
+Roller:
 
-### 8.2 Kimler Kullanabilecek
+- `SUPER_ADMIN`
+- `DEPT_MANAGER`
+- `DEPT_USER`
 
-LDAP aktifken giriş yapabilen herkes:
+Not:
 
-- AD’de ilgili OU altında bulunan ve `sAMAccountName` ile bulunabilen kullanıcılar.
-- Ancak admin paneline erişebilmek için `is_staff=True` olmalıdır. Bu alan LDAP entegrasyonunda otomatik set edilmiyor.
-- Bu nedenle admin erişimi için lokal tarafta kullanıcıya `is_staff` ve rol ataması yapılması gerekir.
+- Model seviyesinde sadece bir adet tam yetkili kullaniciya izin verilir.
+- `is_superuser=True` veya `role='SUPER_ADMIN'` olan ikinci bir kayit kaydedilemez.
 
-### 8.3 LDAP Gelince Sistem Nasıl Kalacak
+### 6.3 QRCode
 
-LDAP aktif olduğunda sistemin temel davranışı değişmez, sadece kimlik doğrulama kaynağı AD olur:
+Dinamik QR kaydidir.
 
-- Giriş doğrulaması AD’den gelir.
-- Kullanıcı kaydı lokal DB’de açılır ve güncellenir.
-- Yetkiler hâlâ `role` ve `department` alanlarına bağlıdır.
-- Departman eşlemesi AD `department` alanı ile otomatik yapılır.
-- LDAP devre dışıysa, standart Django kullanıcıları ile çalışır.
+Alanlar:
 
-### 8.4 LDAP Ayarları (settings.py)
+- `short_id`
+- `department`
+- `created_by`
+- `title`
+- `destination_url`
+- `is_active`
+- `created_at`
+- `updated_at`
+- `history`
 
-Mevcut yapılandırma:
+### 6.4 ScanAnalytics
 
+Her tarama icin bir kayit olusur.
+
+Alanlar:
+
+- `qr_code`
+- `timestamp`
+- `ip_address_hash`
+- `user_agent`
+- `country`
+- `city`
+- `device_type`
+
+Not:
+
+- Ham IP saklanmaz
+- `hash_ip()` ile salt'li SHA-256 hash saklanir
+
+## 7. Yetkilendirme Mantigi
+
+Bu proje departman bazli izolasyon mantigi ile calisir.
+
+### 7.1 Normal LDAP kullanicisi
+
+- Sadece kendi biriminin QR kayitlarini gorur
+- Sadece kendi biriminin QR kayitlarini duzenler
+- Sadece kendi biriminin QR kayitlarini siler
+- Sadece kendi biriminin QR kayitlarinin PNG'sini indirir
+- QR olusturunca kayit otomatik kendi birimine yazilir
+
+### 7.2 Super Admin
+
+- Tum birimleri gorur
+- Tum QR kayitlarini duzenler
+- Tum analitikleri gorur
+- Django admin icinde kullanici ve departman yonetimi yapabilir
+
+### 7.3 Kritik not
+
+Tek bir global admin kullanin:
+
+- Ya 1 adet yerel Django superuser kullanin
+- Ya da `LDAP_SUPER_ADMIN_USERNAME` ile 1 adet LDAP kullanicisini Super Admin yapin
+
+Ikisini ayni anda tanimlamak dogru degildir. Model seviyesindeki tek-global-admin kurali buna engel olmak icin vardir.
+
+## 8. URL Haritasi
+
+### Genel
+
+- `/` -> landing
+- `/logout/` -> cikis
+- `/<short_id>/` -> redirect motoru
+
+### Dashboard
+
+- `/dashboard/`
+- `/dashboard/create/`
+- `/dashboard/edit/<short_id>/`
+- `/dashboard/delete/<short_id>/`
+- `/download-qr/<short_id>/`
+
+### Giris
+
+- `/admin/login/` -> giris ekrani
+- `/admin/logout/` -> cikis
+- `/admin/` -> dashboard'a yonlenir
+
+## 9. Uygulama Akislari
+
+## 9.1 Giris Akisi
+
+1. Kullanici `/admin/login/` ekranina gelir
+2. `AUTHENTICATION_BACKENDS` sirasina gore dogrulama yapilir
+3. LDAP aktifse `django_auth_ldap.backend.LDAPBackend` devreye girer
+4. Kullanici basarili ise yerel `CustomUser` kaydi guncellenir veya olusturulur
+5. `populate_user` sinyali ile LDAP `department` alani okunur
+6. Yerel `Department` kaydi olusturulur veya bulunur
+7. Kullanici `department` alanina atanir
+8. Basarili giris sonrasi `/dashboard/` acilir
+
+## 9.2 Dashboard Akisi
+
+1. `get_accessible_qr_codes(user)` kullanilir
+2. Kullanici Super Admin ise tum kayitlar gelir
+3. Normal kullanici ise sadece `department_id=user.department_id` kayitlari gelir
+4. Dashboard ust kartlari iki bagimsiz toggle filtre gibi calisir:
+   - aktif kayitlar
+   - en az bir kez tarananlar
+5. Liste buna gore olusur
+
+## 9.3 QR Olusturma Akisi
+
+1. Kullanici `/dashboard/create/` ekranina girer
+2. Form `title` ve `destination_url` alir
+3. URL whitelist kontrolunden gecer
+4. Kayit `request.user.department` ile otomatik ayni birime yazilir
+5. Kullanici birime atanmis degilse hata doner
+
+## 9.4 QR Guncelleme Akisi
+
+1. `short_id` ile kayit bulunur
+2. Kayit `get_accessible_qr_codes(user)` icinde degilse kullanici erisemez
+3. Form dogrulanir
+4. Normal kullanicida `department` degismez
+
+## 9.5 QR Silme Akisi
+
+1. Kullanici silme ekranina gelir
+2. Kayit yine yetki filtresi icinden bulunur
+3. POST ile silinir
+
+## 9.6 Redirect Akisi
+
+1. Kullanici `/<short_id>/` adresine gelir
+2. Aktif QR kaydi bulunur
+3. Redirect loop kontrolu yapilir
+4. IP hash'lenir
+5. `ScanAnalytics` kaydi olusturulur
+6. Hedef URL'ye 302 yapilir
+
+## 9.7 QR Indirme Akisi
+
+1. Yetkili kullanici `/download-qr/<short_id>/`
+2. Kayit yine yetki filtresiyle bulunur
+3. PNG uretilir
+4. `inline` veya `attachment` olarak doner
+
+## 10. LDAP / Active Directory Entegrasyonu
+
+Bu proje LDAP altyapisina hazirdir.
+
+LDAP aktif oldugunda:
+
+- Giris AD uzerinden dogrulanir
+- Kullanici bilgileri yerel Django kullanicisi ile senkronlanir
+- `department` alani yerel `Department` tablosuna map edilir
+- `LDAP_SUPER_ADMIN_USERNAME` ile tek bir LDAP kullanicisi Super Admin seviyesine yukseltilir
+
+### 10.1 Kullanilan ayarlar
+
+LDAP ayarlari `qr_project/settings.py` icinde env tabanli okunur.
+
+Temel degiskenler:
+
+- `LDAP_ENABLED`
 - `AUTH_LDAP_SERVER_URI`
 - `AUTH_LDAP_BIND_DN`
 - `AUTH_LDAP_BIND_PASSWORD`
-- `AUTH_LDAP_USER_SEARCH`
-- `AUTH_LDAP_USER_ATTR_MAP`
-- `AUTH_LDAP_ALWAYS_UPDATE_USER`
+- `AUTH_LDAP_USER_SEARCH_BASE_DN`
+- `AUTH_LDAP_USER_SEARCH_FILTER`
+- `AUTH_LDAP_START_TLS`
+- `AUTH_LDAP_IGNORE_CERT_ERRORS`
+- `AUTH_LDAP_ATTR_FIRST_NAME`
+- `AUTH_LDAP_ATTR_LAST_NAME`
+- `AUTH_LDAP_ATTR_EMAIL`
+- `AUTH_LDAP_CACHE_TIMEOUT`
+- `AUTH_LDAP_NETWORK_TIMEOUT`
+- `LDAP_SUPER_ADMIN_USERNAME`
 
-Not: Şu anda bu değerler için varsayılan sabit değerler bulunuyor. Üretimde mutlaka ortam değişkenleriyle override edilmelidir.
+### 10.2 Department mapleme nasil calisir
 
-## 9) Güvenlik Önlemleri (Mevcut)
+`core/signals.py` icindeki `map_ldap_user_to_department` fonksiyonu:
 
-Uygulamada mevcut güvenlik mekanizmaları:
+1. LDAP kullanicisinin `department` attribute'unu okur
+2. Yerel `Department` tablosunda ayni isimde kayit arar
+3. Yoksa olusturur
+4. Kullaniciyi o birime baglar
+5. Kullaniciyi dashboard'a girebilmesi icin `is_staff=True` yapar
 
-- `SecurityMiddleware`, `CSRF`, `XFrameOptions` middleware aktif.
-- QR hedef URL’lerde domain whitelist kontrolü var.
-- IP adresi ham olarak saklanmıyor; salt’lı SHA-256 hash tutuluyor.
-- RBAC ile departman izolasyonu var.
-- Admin panelde `ScanAnalytics` kayıtları sadece okunabilir.
-- QR değişiklik geçmişi tutuluyor (audit trail).
-- Redirect loop koruması var.
+### 10.3 Super Admin nasil belirlenir
 
-## 10) Açık Riskler ve Eksikler (Mevcut Koddan Tespit)
+Sunucuda su env degerini girersiniz:
 
-Bu bölüm, doğrudan kodda görülen açıkları listeler:
+```env
+LDAP_SUPER_ADMIN_USERNAME=ad_kullanici_adi
+```
 
-- `SECRET_KEY` ve LDAP bind şifresi varsayılan olarak kod içinde. Bu üretim için kritik zafiyettir.
-- `IP_HASH_SALT` sabit; ortam değişkeni değil.
-- `hash_ip` fonksiyonunda `hashlib` import edilmemiş, runtime hatası üretir.
-- `core/signals.py` içinde `Department` oluşturulurken `description` alanı kullanılıyor, fakat modelde yok; LDAP login sırasında hata üretir.
-- `verify_performance.py` ve bazı verify scriptleri mevcut kodla uyumlu değil (cache ve celery task’lar yok).
-- `celery` yapılandırması var ama gerçek task yok; async analitik yok.
-- QR oluşturma ekranı super admin için departman atanmadıysa hata verebilir (department null olamaz).
-- `ALLOWED_QR_DOMAINS` sabit listesi konfigüre edilebilir değil; yönetim paneli yok.
-- Rate limiting, brute-force koruması, IP bloklama gibi mekanizmalar yok.
-- HTTPS zorunluluğu ve HSTS ayarları tanımlı değil.
-- `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` gibi production güvenlik ayarları yok.
-- `landing.html` dış linkte `rel="noopener noreferrer"` yok (tabnabbing riski).
-- `db.sqlite3` depo içinde; gerçek veri içeriyorsa risk.
-- Harici CDN (Tailwind/Google Fonts) kullanımı, CSP/mahremiyet açısından risk oluşturabilir.
+Bu kullanici LDAP ile giris yaptiginda:
 
-## 11) Doğrulama / Test Scriptleri
+- `role='SUPER_ADMIN'`
+- `is_superuser=True`
 
-Proje kökünde manuel doğrulama amaçlı scriptler bulunur:
+olarak isaretlenir.
 
-- `verify_core.py`: Model oluşturma ve simple_history kontrolü.
-- `verify_security.py`: Domain whitelist testi.
-- `verify_rbac.py`: Admin RBAC kontrolü.
-- `verify_redirection.py`: Redirect ve analitik kaydı testi.
-- `verify_qr.py`: QR PNG üretimi testi.
-- `verify_analytics.py`: Analitik sayımı ve RBAC.
-- `verify_frontend.py`: Landing ve routing doğrulaması (metinler güncel değil).
-- `verify_performance.py`: Cache/Celery testleri (uyumsuz).
+Tekrar hatirlatma:
 
-## 12) Kurulum ve Çalıştırma (Önerilen)
+- Yerel superuser ve LDAP super admin'i ayni anda kullanmayin
+- Bir tanesini secin
 
-Bu repo içinde requirements dosyası yok; bağımlılıklar importlardan çıkarılmıştır:
+## 11. Ortam Degiskenleri
 
-- Django 6.0
-- qrcode (Pillow backend)
-- nanoid
-- django-simple-history
-- whitenoise
-- celery
-- django-auth-ldap + python-ldap (opsiyonel)
+Ornek dosya: `.env.example`
 
-Örnek kurulum adımları:
+Bu proje `.env` dosyasini otomatik okuyabilir. Uretimde ise systemd `EnvironmentFile` kullanilmasi daha sagliklidir.
+
+### Genel ayarlar
+
+```env
+DJANGO_SECRET_KEY=change-me
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,qr.example.org
+IP_HASH_SALT=change-me-too
+ALLOWED_QR_DOMAINS=yee.org.tr,gov.tr,youtube.com
+```
+
+### LDAP ayarlari
+
+```env
+LDAP_ENABLED=True
+AUTH_LDAP_SERVER_URI=ldaps://dc01.yee.org.tr:636
+AUTH_LDAP_BIND_DN=CN=LDAP Service,OU=Service Accounts,DC=yee,DC=org,DC=tr
+AUTH_LDAP_BIND_PASSWORD=change-this
+AUTH_LDAP_START_TLS=False
+AUTH_LDAP_IGNORE_CERT_ERRORS=False
+AUTH_LDAP_USER_SEARCH_BASE_DN=OU=Users,DC=yee,DC=org,DC=tr
+AUTH_LDAP_USER_SEARCH_FILTER=(sAMAccountName=%(user)s)
+AUTH_LDAP_ATTR_FIRST_NAME=givenName
+AUTH_LDAP_ATTR_LAST_NAME=sn
+AUTH_LDAP_ATTR_EMAIL=mail
+AUTH_LDAP_CACHE_TIMEOUT=3600
+AUTH_LDAP_NETWORK_TIMEOUT=5
+LDAP_SUPER_ADMIN_USERNAME=ldap-admin-user
+```
+
+## 12. Lokal Gelistirme Ortami
+
+### 12.1 Gerekenler
+
+- Python 3.12+
+- Node.js (sadece Tailwind gerekirse)
+
+### 12.2 Kurulum
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
-pip install django qrcode pillow nanoid django-simple-history whitenoise celery django-auth-ldap python-ldap
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+cp .env.example .env
 python manage.py migrate
-python manage.py createsuperuser
+python manage.py check
 python manage.py runserver
 ```
 
-## 13) Konfigürasyon (Önerilen Ortam Değişkenleri)
+Windows'ta:
 
-Production için önerilen env değişkenleri:
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+pip install --upgrade pip
+pip install -r requirements.txt
+Copy-Item .env.example .env
+python manage.py migrate
+python manage.py check
+python manage.py runserver
+```
 
-- `DJANGO_SECRET_KEY`
-- `DJANGO_DEBUG`
-- `DJANGO_ALLOWED_HOSTS`
-- `AUTH_LDAP_SERVER_URI`
-- `AUTH_LDAP_BIND_DN`
-- `AUTH_LDAP_BIND_PASSWORD`
-- `IP_HASH_SALT`
+### 12.3 Tailwind
 
-## 14) Üretim Notları
+Bu projede `tailwindcss.exe` ve `node_modules` bulunuyor. CSS yeniden derlemek icin:
 
-- SQLite yerine kurumsal DB (PostgreSQL) önerilir.
-- Statik dosyalar için WhiteNoise yeterli olabilir; yüksek trafikte CDN önerilir.
-- LDAP kullanımı için python-ldap kurulumu Windows ortamında sorun çıkarabilir.
-- IP hash salt ve LDAP bind şifreleri kod içinde tutulmamalıdır.
-- `ALLOWED_QR_DOMAINS` dinamik bir yönetim ekranına taşınmalıdır.
-- Audit log büyüyebilir; arşiv/retention planı gerekir.
+```bash
+./tailwindcss.exe -i ./static/css/input.css -o ./static/css/tailwind.css --minify
+```
 
-## 15) Özet
+Linux'ta npm ile yeniden kurmak isterseniz:
 
-Bu sistem; departman temelli RBAC, domain whitelist, audit logging ve QR yönlendirme altyapısı sunar. LDAP entegrasyonu için gerekli altyapı kısmen hazırdır, ancak bazı kritik güvenlik ve stabilite eksikleri giderilmeden üretime alınması uygun değildir.
+```bash
+npm install
+npx tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.css --minify
+```
+
+## 13. Linux Sunucuda LDAP ile Kurulum
+
+Bu bolum, gercek Linux sunucuda LDAP/AD ile calistirmak icin yazildi.
+
+Assume edilen ortam:
+
+- Ubuntu 22.04 / 24.04 veya Debian
+- Nginx reverse proxy
+- Gunicorn
+- Python virtualenv
+
+### 13.1 Sistem paketleri
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv python3-dev build-essential \
+    libldap2-dev libsasl2-dev libssl-dev nginx
+```
+
+Bu paketler ozellikle `python-ldap` icin gereklidir.
+
+### 13.2 Projeyi sunucuya alin
+
+```bash
+sudo mkdir -p /opt/dynamicqr
+sudo chown $USER:$USER /opt/dynamicqr
+cd /opt/dynamicqr
+git clone <REPO_URL> .
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 13.3 Environment dosyasini olusturun
+
+Yerel test icin:
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Uretim icin tavsiye edilen:
+
+```bash
+sudo cp .env.example /etc/dynamicqr.env
+sudo nano /etc/dynamicqr.env
+sudo chmod 600 /etc/dynamicqr.env
+```
+
+### 13.4 LDAP bilgilerini doldurun
+
+Ornek:
+
+```env
+LDAP_ENABLED=True
+AUTH_LDAP_SERVER_URI=ldaps://dc01.yee.org.tr:636
+AUTH_LDAP_BIND_DN=CN=LDAP Service,OU=Service Accounts,DC=yee,DC=org,DC=tr
+AUTH_LDAP_BIND_PASSWORD=very-secret-password
+AUTH_LDAP_USER_SEARCH_BASE_DN=OU=Users,DC=yee,DC=org,DC=tr
+AUTH_LDAP_USER_SEARCH_FILTER=(sAMAccountName=%(user)s)
+LDAP_SUPER_ADMIN_USERNAME=kurumsal.superadmin
+```
+
+### 13.5 LDAP baglantisini dogrulayin
+
+Sunucudan AD'ye erisim oldugunu once ag seviyesinde test edin:
+
+```bash
+nc -vz dc01.yee.org.tr 636
+```
+
+LDAP bind testi icin `ldap-utils` kurup deneyebilirsiniz:
+
+```bash
+sudo apt install -y ldap-utils
+ldapsearch -x -H ldaps://dc01.yee.org.tr:636 \
+  -D "CN=LDAP Service,OU=Service Accounts,DC=yee,DC=org,DC=tr" \
+  -W \
+  -b "OU=Users,DC=yee,DC=org,DC=tr" \
+  "(sAMAccountName=test.user)"
+```
+
+Bu adim Django'dan once ag ve LDAP tarafini dogrulamak icin onemlidir.
+
+### 13.6 Django hazirligi
+
+```bash
+cd /opt/dynamicqr
+source .venv/bin/activate
+python manage.py migrate
+python manage.py collectstatic --noinput
+python manage.py check
+```
+
+### 13.7 Gunicorn
+
+Test calistirmasi:
+
+```bash
+source /opt/dynamicqr/.venv/bin/activate
+gunicorn qr_project.wsgi:application --bind 127.0.0.1:8000 --workers 3 --timeout 120
+```
+
+### 13.8 systemd
+
+Projede ornek servis dosyasi var:
+
+- `deploy/linux/dynamicqr.service.example`
+
+Kurulum:
+
+```bash
+sudo cp deploy/linux/dynamicqr.service.example /etc/systemd/system/dynamicqr.service
+sudo systemctl daemon-reload
+sudo systemctl enable dynamicqr
+sudo systemctl start dynamicqr
+sudo systemctl status dynamicqr
+```
+
+### 13.9 Nginx
+
+Ornek Nginx server block:
+
+```nginx
+server {
+    listen 80;
+    server_name qr.example.org;
+
+    client_max_body_size 20M;
+
+    location /static/ {
+        alias /opt/dynamicqr/staticfiles/;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Aktif etme:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/dynamicqr /etc/nginx/sites-enabled/dynamicqr
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### 13.10 LDAP login testi
+
+1. Tarayicidan `/admin/login/` acin
+2. Kurumdaki AD kullanicisi ile giris yapin
+3. Basarili giriste `/dashboard/` acilmali
+4. Django shell ile kullaniciyi kontrol edin:
+
+```bash
+python manage.py shell
+```
+
+```python
+from core.models import CustomUser
+u = CustomUser.objects.get(username="test.user")
+print(u.department, u.role, u.is_staff, u.is_superuser)
+```
+
+Beklenen:
+
+- Normal LDAP kullanicisi: `is_staff=True`, `role=DEPT_USER`, `department` dolu
+- Super Admin LDAP kullanicisi: `is_staff=True`, `is_superuser=True`, `role=SUPER_ADMIN`
+
+## 14. Guvenlik Notlari
+
+### Uretimde yapilmasi gerekenler
+
+- `DJANGO_DEBUG=False`
+- Gercek `DJANGO_SECRET_KEY`
+- Gercek `IP_HASH_SALT`
+- `ALLOWED_HOSTS` sinirli olmali
+- Mümkunse `ldaps://` kullanin
+- LDAP sertifika dogrulamayi kapatmayin
+- SQLite yerine PostgreSQL kullanin
+- Nginx arkasinda TLS kullanin
+- Gunicorn'u systemd ile yonetin
+
+### Sadece test icin
+
+```env
+AUTH_LDAP_IGNORE_CERT_ERRORS=True
+```
+
+Bu ayari sadece testte kullanin. Uretimde kullanmayin.
+
+## 15. Bu Projeyi Bastan Ayni Mantikla Yapmak Istersem
+
+Bu sistemi sifirdan yeniden kurmak icin su sirayi izleyin:
+
+1. Django proje ve `core` app olusturun
+2. `AUTH_USER_MODEL` olarak `CustomUser` tanimlayin
+3. `Department`, `QRCode`, `ScanAnalytics` modellerini kurun
+4. `hash_ip()` ile IP hash mantigini ekleyin
+5. `django-simple-history` ile `QRCode.history` ekleyin
+6. `get_accessible_qr_codes(user)` gibi merkezi RBAC filtre fonksiyonu yazin
+7. Dashboard, create, edit, delete ve download view'larini bu filtre uzerinden calistirin
+8. Redirect view'da analytics kaydi ve loop korumasi yapin
+9. `django-auth-ldap` ile LDAP backend'i ekleyin
+10. `populate_user` sinyaliyle `department` alanini AD'den map edin
+11. Tek global admin kuralini model seviyesinde zorlayin
+12. Whitelist kontrollu URL formu yazin
+13. Gunicorn + Nginx + systemd ile Linux deploy edin
+
+Bu repo tam olarak bu mimariyi uygular.
+
+## 16. Sik Karsilasilan Sorunlar
+
+### `python-ldap module not found`
+
+Sebep:
+
+- `python-ldap` kurulu degil
+- Linux'ta gerekli `libldap2-dev`, `libsasl2-dev`, `libssl-dev` paketleri eksik
+
+Cozum:
+
+```bash
+sudo apt install -y libldap2-dev libsasl2-dev libssl-dev
+pip install python-ldap django-auth-ldap
+```
+
+### LDAP kullanicisi giris yapiyor ama dashboard acilmiyor
+
+Kontrol edin:
+
+- `user.is_staff` true mu
+- `department` dolu mu
+- `LDAP_ENABLED=True` mi
+- `AUTH_LDAP_USER_SEARCH_BASE_DN` dogru mu
+
+### Kullanici giris yapiyor ama birim gelmiyor
+
+Muhtemel sebepler:
+
+- AD'de `department` bos
+- Farkli attribute kullaniliyor
+- Bind hesabi o alani okuyamiyor
+
+Gerekirse `core/signals.py` icinde `department` yerine kurumun kullandigi alan adina gecin.
+
+### Super Admin calismiyor
+
+Kontrol edin:
+
+- `LDAP_SUPER_ADMIN_USERNAME` dogru mu
+- Kullanici adi AD'deki `sAMAccountName` ile birebir ayni mi
+- Ayni anda bir yerel superuser daha var mi
+
+### Public test sunucusu LDAP'a baglanamiyor
+
+Sebep genelde ag erisimidir. Kurum AD'si public internetten kapaliysa:
+
+- VPN
+- site-to-site tunnel
+- ya da kurum ici test sunucusu
+
+gerekir.
+
+## 17. Kontrol Komutlari
+
+```bash
+python manage.py check
+python manage.py migrate
+python manage.py collectstatic --noinput
+python manage.py shell
+```
+
+RBAC ve temel davranis dogrulamalari icin repo icinde su scriptler de bulunur:
+
+- `verify_core.py`
+- `verify_security.py`
+- `verify_rbac.py`
+- `verify_redirection.py`
+- `verify_qr.py`
+- `verify_analytics.py`
+
+## 18. Son Not
+
+Bu repo artik su senaryoya gore hazirdir:
+
+- Linux sunucuda calisir
+- LDAP/AD ile giris alir
+- LDAP'den birim bilgisini ceker
+- QR kayitlarini birim bazli izole eder
+- Tek bir Super Admin kullaniciyi tam yetkili tutar
+
+Gercek ortama gecmeden once en dogru test sirası:
+
+1. Linux test sunucusu
+2. LDAP bind testi
+3. Uygulama login testi
+4. Departman izolasyon testi
+5. Super Admin testi
+6. Redirect ve analytics testi

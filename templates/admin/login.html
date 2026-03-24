@@ -1,155 +1,424 @@
-{% load i18n static %}
+﻿{% load i18n static %}
 <!DOCTYPE html>
-<html lang="tr" class="h-full">
+<html lang="tr" class="h-full" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YEE Personel Girişi | Dinamik QR</title>
+    <meta name="theme-color" content="#eef4f4" id="theme-color-meta">
+    <link rel="icon" type="image/png" href="{% static 'img/yee-favicon.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/yee-favicon.png' %}">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
+    <script>
+        (function () {
+            const storageKey = 'dynamicqr-theme';
+            const root = document.documentElement;
+            const savedTheme = localStorage.getItem(storageKey);
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const theme = savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : systemTheme;
+            root.dataset.theme = theme;
+            root.style.colorScheme = theme;
+        })();
+    </script>
     <style>
         :root {
-            --brand-navy: #08111a;
+            --brand-ink: #10202a;
+            --brand-ink-soft: #2d4550;
+            --brand-aqua: #12bcc8;
+            --brand-aqua-soft: #5adadd;
+            --page-bg-start: #eef4f4;
+            --page-bg-end: #f8fbfb;
+            --glass-panel-bg: rgba(255, 255, 255, 0.72);
+            --glass-panel-border: rgba(255, 255, 255, 0.82);
+            --glass-panel-shadow: 0 24px 70px rgba(16, 32, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+            --brand-panel-bg: linear-gradient(160deg, rgba(28, 52, 58, 0.88), rgba(51, 83, 91, 0.9));
+            --brand-panel-border: rgba(255, 255, 255, 0.1);
+            --brand-panel-shadow: 0 22px 58px rgba(16, 32, 42, 0.16);
+            --input-bg: rgba(255, 255, 255, 0.82);
+            --input-border: rgba(16, 32, 42, 0.1);
+            --input-focus-bg: rgba(255, 255, 255, 0.96);
+            --toggle-bg: rgba(255, 255, 255, 0.72);
+            --toggle-border: rgba(16, 32, 42, 0.08);
+            --toggle-color: #10202a;
+        }
+
+        html[data-theme="dark"] {
+            --brand-ink: #e7f3f4;
+            --brand-ink-soft: #a9c0c4;
+            --page-bg-start: #071316;
+            --page-bg-end: #0a191d;
+            --glass-panel-bg: rgba(9, 23, 28, 0.8);
+            --glass-panel-border: rgba(255, 255, 255, 0.08);
+            --glass-panel-shadow: 0 30px 90px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            --brand-panel-bg: linear-gradient(160deg, rgba(4, 13, 17, 0.99), rgba(7, 27, 32, 0.995));
+            --brand-panel-border: rgba(255, 255, 255, 0.08);
+            --brand-panel-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+            --input-bg: rgba(6, 19, 23, 0.92);
+            --input-border: rgba(255, 255, 255, 0.08);
+            --input-focus-bg: rgba(8, 24, 30, 0.98);
+            --toggle-bg: rgba(9, 23, 28, 0.82);
+            --toggle-border: rgba(255, 255, 255, 0.08);
+            --toggle-color: #e7f3f4;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--brand-navy);
+            font-family: 'Manrope', sans-serif;
+            background: linear-gradient(180deg, var(--page-bg-start) 0%, var(--page-bg-end) 100%);
+            color: var(--brand-ink);
             -webkit-font-smoothing: antialiased;
         }
 
-        .mesh-background {
+        .login-background {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
             z-index: -1;
+        }
+
+        .login-background::before,
+        .login-background::after {
+            content: "";
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(90px);
+            opacity: 0.8;
+        }
+
+        .login-background::before {
+            width: 28rem;
+            height: 28rem;
+            top: -8rem;
+            left: -6rem;
+            background: rgba(90, 218, 221, 0.3);
+        }
+
+        .login-background::after {
+            width: 24rem;
+            height: 24rem;
+            right: -4rem;
+            bottom: -6rem;
+            background: rgba(18, 188, 200, 0.18);
+        }
+
+        .glass-panel {
+            background: var(--glass-panel-bg);
+            backdrop-filter: blur(32px) saturate(180%);
+            -webkit-backdrop-filter: blur(32px) saturate(180%);
+            border: 1px solid var(--glass-panel-border);
+            box-shadow: var(--glass-panel-shadow);
+        }
+
+        .brand-panel {
+            background: var(--brand-panel-bg);
+            border: 1px solid var(--brand-panel-border);
+            box-shadow: var(--brand-panel-shadow);
+        }
+
+        .brand-panel-glow {
             background:
-                radial-gradient(at 0% 0%, hsla(210, 100%, 15%, 1) 0, transparent 50%),
-                radial-gradient(at 100% 100%, hsla(190, 100%, 10%, 1) 0, transparent 50%);
-            filter: blur(60px);
+                radial-gradient(circle at top right, rgba(90, 218, 221, 0.12), transparent 34%),
+                radial-gradient(circle at bottom left, rgba(18, 188, 200, 0.08), transparent 28%);
         }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(50px) saturate(200%);
-            -webkit-backdrop-filter: blur(50px) saturate(200%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 32px 64px -16px rgba(0, 0, 0, 0.7);
+        html[data-theme="dark"] .brand-panel-glow {
+            background:
+                radial-gradient(circle at top right, rgba(90, 218, 221, 0.2), transparent 34%),
+                radial-gradient(circle at bottom left, rgba(18, 188, 200, 0.16), transparent 28%);
         }
 
-        .input-glass {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .brand-panel-card {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
         }
 
-        .input-glass:focus {
-            background: rgba(0, 0, 0, 0.3);
-            border-color: #0ea5e9;
-            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.2);
+        html[data-theme="dark"] .brand-panel-card {
+            border-color: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.07);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+
+        .input-shell {
+            width: 100%;
+            border-radius: 1rem;
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            padding: 0.9rem 1rem;
+            color: var(--brand-ink);
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
             outline: none;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #0ea5e9 0%, #0d9488 100%);
-            box-shadow: 0 10px 30px -5px rgba(14, 165, 233, 0.4);
-            transition: all 0.3s ease;
+        .input-shell:focus {
+            border-color: rgba(18, 188, 200, 0.45);
+            background: var(--input-focus-bg);
+            box-shadow: 0 0 0 4px rgba(18, 188, 200, 0.12);
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-            box-shadow: 0 15px 40px -5px rgba(14, 165, 233, 0.6);
+        .primary-button {
+            width: 100%;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #12bcc8 0%, #0ea5b2 100%);
+            color: #fff;
+            font-weight: 800;
+            padding: 0.9rem 1.25rem;
+            box-shadow: 0 18px 34px rgba(18, 188, 200, 0.26);
+            transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+        }
+
+        .primary-button:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.03);
+            box-shadow: 0 22px 42px rgba(18, 188, 200, 0.34);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 1.8rem;
+            height: 1px;
+            background: currentColor;
+            opacity: 0.5;
+        }
+
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            border-radius: 999px;
+            border: 1px solid var(--toggle-border);
+            background: var(--toggle-bg);
+            color: var(--toggle-color);
+            padding: 0.75rem 0.95rem;
+            font-size: 0.82rem;
+            font-weight: 700;
+            transition: transform 160ms ease, background-color 160ms ease;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-1px);
+        }
+
+        .theme-toggle svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .logo-plinth {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        html[data-theme="dark"] .text-slate-900 {
+            color: #f4fbfb !important;
+        }
+
+        html[data-theme="dark"] .text-slate-600 {
+            color: #b5c7cb !important;
+        }
+
+        html[data-theme="dark"] .text-slate-500 {
+            color: #9ab0b5 !important;
+        }
+
+        html[data-theme="dark"] .text-slate-400 {
+            color: #86a0a5 !important;
+        }
+
+        html[data-theme="dark"] .border-rose-200 {
+            border-color: rgba(251, 113, 133, 0.22) !important;
+        }
+
+        html[data-theme="dark"] .bg-rose-50 {
+            background-color: rgba(127, 29, 29, 0.22) !important;
+        }
+
+        html[data-theme="dark"] .text-rose-600 {
+            color: #fda4af !important;
         }
     </style>
 </head>
 
-<body class="flex flex-col h-full text-slate-200">
-    <div class="mesh-background"></div>
+<body class="min-h-full">
+    <div class="login-background"></div>
 
-    <main class="flex-grow flex items-center justify-center p-6">
-        <div class="max-w-md w-full animate-in fade-in zoom-in-95 duration-700">
-            <!-- Header -->
-            <div class="text-center mb-10">
-                <div
-                    class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-[2rem] shadow-2xl mb-6 border border-white/20">
-                    <span class="font-black text-white text-4xl">Y</span>
-                </div>
-                <h1 class="text-3xl font-black text-white tracking-tighter">Yunus Emre Enstitüsü</h1>
-                <p class="text-cyan-500 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Kurumsal Kimlik & Erişim
-                </p>
+    <main class="flex min-h-full items-center justify-center p-4 md:p-6">
+        <div class="w-full max-w-5xl">
+            <div class="mb-3 flex justify-end md:mb-4">
+                <button type="button" class="theme-toggle" data-theme-toggle aria-label="Temayı değiştir">
+                    <svg data-theme-icon="light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v2m0 14v2m7-9h2M3 12H5m12.364 6.364 1.414 1.414M5.222 5.222l1.414 1.414m0 10.728-1.414 1.414m12.728-12.728-1.414 1.414M12 16a4 4 0 100-8 4 4 0 000 8z">
+                        </path>
+                    </svg>
+                    <svg data-theme-icon="dark" class="hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9 9 0 1012 21a8.96 8.96 0 008.354-5.646z">
+                        </path>
+                    </svg>
+                    <span data-theme-label class="hidden md:inline">Koyu tema</span>
+                </button>
             </div>
+            <div class="grid w-full gap-5 lg:grid-cols-[1fr_0.92fr]">
+            <section class="brand-panel relative overflow-hidden rounded-[2.25rem] p-6 text-white md:p-8">
+                <div class="brand-panel-glow absolute inset-0"></div>
+                <div class="relative z-10">
+                    <div class="logo-plinth px-4 py-3">
+                        <img src="{% static 'img/yee-logo.png' %}" alt="Yunus Emre Enstitüsü logosu"
+                            class="h-12 w-auto object-contain md:h-14">
+                    </div>
 
-            <div class="glass-card rounded-[2.5rem] p-10 relative overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
+                    <div class="mt-6 max-w-md">
+                        <span class="eyebrow text-cyan-100/80">Kurumsal erişim</span>
+                        <h1 class="mt-3 text-3xl font-extrabold leading-tight tracking-tight md:text-4xl">
+                            Güvenli personel girişi
+                        </h1>
+                        <p class="mt-4 text-sm leading-7 text-white/72 md:text-[15px]">
+                            Dinamik QR paneline yetkili hesabınızla erişin ve yönetimi tek ekrandan sürdürün.
+                        </p>
+                    </div>
 
-                <h2 class="text-xl font-bold text-white mb-2 relative z-10">Personel Girişi</h2>
-                <p class="text-xs text-slate-400 mb-8 relative z-10">Lütfen kurumsal kimlik bilgileriniz ile devam edin.
-                </p>
+                    <div class="mt-8 max-w-md space-y-3">
+                        <div class="brand-panel-card flex items-center gap-3 rounded-[1.25rem] px-4 py-3.5">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-cyan-100">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 3l7 4v5c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V7l7-4z"></path>
+                                </svg>
+                            </div>
+                            <p class="text-sm font-semibold text-white/80">Yetkili kurumsal erişim</p>
+                        </div>
+                        <div class="brand-panel-card flex items-center gap-3 rounded-[1.25rem] px-4 py-3.5">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-cyan-100">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 7h16M4 12h10M4 17h7"></path>
+                                </svg>
+                            </div>
+                            <p class="text-sm font-semibold text-white/80">Bağlantı ve QR yönetimi tek panelde</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="glass-panel rounded-[2.25rem] p-6 md:p-8">
+                <div class="mb-6">
+                    <span class="eyebrow text-slate-500">Personel girişi</span>
+                    <h2 class="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 md:text-[2rem]">Kurumsal kimliğinizle devam edin</h2>
+                    <p class="mt-2.5 text-sm leading-6 text-slate-600">
+                        Erişim yalnızca yetkili kullanıcılar içindir. Tüm oturum hareketleri güvenlik kayıtlarına işlenir.
+                    </p>
+                </div>
 
                 {% if form.errors and not form.non_field_errors %}
-                <div
-                    class="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl mb-6 animate-in slide-in-from-top-2">
-                    <p class="text-rose-400 text-xs font-bold uppercase tracking-wider">Hatalı Bilgi Girdiniz</p>
+                <div class="mb-5 rounded-[1.25rem] border border-rose-200 bg-rose-50 px-4 py-3.5 text-sm font-semibold text-rose-600">
+                    Kullanıcı adı veya şifre doğrulanamadı.
                 </div>
                 {% endif %}
 
                 {% if form.non_field_errors %}
                 {% for error in form.non_field_errors %}
-                <div
-                    class="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl mb-6 animate-in slide-in-from-top-2">
-                    <p class="text-rose-400 text-xs font-bold tracking-tight">{{ error }}</p>
+                <div class="mb-5 rounded-[1.25rem] border border-rose-200 bg-rose-50 px-4 py-3.5 text-sm font-semibold text-rose-600">
+                    {{ error }}
                 </div>
                 {% endfor %}
                 {% endif %}
 
-                <form action="{{ app_path }}" method="post" id="login-form" class="relative z-10">{% csrf_token %}
-                    <div class="space-y-6">
-                        <div>
-                            <label for="id_username"
-                                class="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-3 ml-1">Kullanıcı
-                                Adı</label>
-                            <input type="text" name="username" id="id_username" required
-                                class="w-full input-glass px-5 py-4 rounded-2xl text-sm font-medium"
-                                placeholder="isim.soyisim">
-                        </div>
-                        <div>
-                            <label for="id_password"
-                                class="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-3 ml-1">Şifre</label>
-                            <input type="password" name="password" id="id_password" required
-                                class="w-full input-glass px-5 py-4 rounded-2xl text-sm font-medium"
-                                placeholder="••••••••••••">
-                        </div>
+                <form action="{{ app_path }}" method="post" id="login-form" class="space-y-4">{% csrf_token %}
+                    <div>
+                        <label for="id_username" class="mb-2.5 block text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-500">
+                            Kullanıcı adı
+                        </label>
+                        <input type="text" name="username" id="id_username" required autocomplete="username"
+                            value="{{ form.username.value|default:'' }}" class="input-shell" placeholder="isim.soyisim">
+                    </div>
+                    <div>
+                        <label for="id_password" class="mb-2.5 block text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-500">
+                            Şifre
+                        </label>
+                        <input type="password" name="password" id="id_password" required autocomplete="current-password"
+                            class="input-shell" placeholder="Şifrenizi girin">
+                    </div>
 
-                        <div class="pt-6">
-                            <button type="submit"
-                                class="w-full btn-primary text-white font-black py-5 rounded-2xl shadow-2xl tracking-tight transition-all text-lg">
-                                Güvenli Giriş Yap
-                            </button>
-                        </div>
+                    <div class="pt-2">
+                        <input type="hidden" name="next" value="{{ next|default:'/dashboard/' }}">
+                        <button type="submit" class="primary-button">Güvenli Giriş Yap</button>
                     </div>
                 </form>
 
-                <div class="mt-12 text-center relative z-10">
-                    <a href="/"
-                        class="text-[10px] font-bold text-slate-500 hover:text-cyan-400 transition-colors uppercase tracking-[0.2em]">
-                        &larr; Yönlendirme Merkezi Ana Sayfa
-                    </a>
+                <div class="mt-8 flex flex-col gap-3 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
+                    <a href="/" class="font-semibold text-slate-600 transition hover:text-slate-900">Ana sayfaya dön</a>
+                    <span class="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Tüm erişimler kayıt altındadır</span>
                 </div>
+            </section>
             </div>
-
-            <p
-                class="text-center mt-10 text-[9px] text-slate-600 font-bold uppercase tracking-[0.25em] leading-loose opacity-60">
-                Sistem etkinlikleri 7/24 izlenmektedir.<br>
-                Kurum politikası gereği tüm erişimler kayıtlıdır.
-            </p>
         </div>
     </main>
+    <script>
+        const themeStorageKey = 'dynamicqr-theme';
+
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            const themeColorMeta = document.getElementById('theme-color-meta');
+            root.dataset.theme = theme;
+            root.style.colorScheme = theme;
+
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute('content', theme === 'dark' ? '#071316' : '#eef4f4');
+            }
+
+            document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+                const label = button.querySelector('[data-theme-label]');
+                const lightIcon = button.querySelector('[data-theme-icon="light"]');
+                const darkIcon = button.querySelector('[data-theme-icon="dark"]');
+
+                button.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+
+                if (label) {
+                    label.textContent = theme === 'dark' ? 'Açık tema' : 'Koyu tema';
+                }
+
+                if (lightIcon) {
+                    lightIcon.classList.toggle('hidden', theme === 'dark');
+                }
+
+                if (darkIcon) {
+                    darkIcon.classList.toggle('hidden', theme !== 'dark');
+                }
+            });
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem(themeStorageKey, nextTheme);
+            applyTheme(nextTheme);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+            document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+                button.addEventListener('click', toggleTheme);
+            });
+        });
+    </script>
 </body>
 
 </html>

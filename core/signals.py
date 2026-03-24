@@ -1,5 +1,5 @@
+import os
 from django.dispatch import receiver
-from django.db.models.signals import post_save
 import logging
 
 try:
@@ -12,6 +12,7 @@ except ImportError:
     ldap_available = False
 
 logger = logging.getLogger(__name__)
+LDAP_SUPER_ADMIN_USERNAME = os.getenv('LDAP_SUPER_ADMIN_USERNAME', '').strip().lower()
 
 @receiver(populate_user)
 def map_ldap_user_to_department(sender, user, ldap_user, **kwargs):
@@ -36,17 +37,35 @@ def map_ldap_user_to_department(sender, user, ldap_user, **kwargs):
             
             # Find or create the department in our local DB
             department, created = Department.objects.get_or_create(
-                name=dept_name,
-                defaults={'description': f'Auto-created from Active Directory login'}
+                name=dept_name
             )
             
             # Auto-assign the user to this department
-            user.department = department
-            
-            # Set default role to standard user if they don't have one
+            dirty_fields = []
+            if user.department_id != department.id:
+                user.department = department
+                dirty_fields.append('department')
+
+            if not user.is_staff:
+                user.is_staff = True
+                dirty_fields.append('is_staff')
+
+            # If role was never assigned, default to the scoped department role
             if not user.role:
                 user.role = 'DEPT_USER'
-                
+                dirty_fields.append('role')
+
+            if LDAP_SUPER_ADMIN_USERNAME and user.username.lower() == LDAP_SUPER_ADMIN_USERNAME:
+                if user.role != 'SUPER_ADMIN':
+                    user.role = 'SUPER_ADMIN'
+                    dirty_fields.append('role')
+                if not user.is_superuser:
+                    user.is_superuser = True
+                    dirty_fields.append('is_superuser')
+
+            if dirty_fields:
+                user.save(update_fields=dirty_fields)
+
             logger.info(f"Automatically mapped LDAP user {user.username} to department {dept_name}")
             
     except Exception as e:

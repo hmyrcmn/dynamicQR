@@ -18,14 +18,25 @@ from django.contrib import admin
 from django.urls import path, include
 from core import views
 
+from django.shortcuts import redirect
+
+def admin_index_redirect(request):
+    return redirect('/dashboard/')
+
 urlpatterns = [
     # Override admin logout to use our custom Liquid Glass logout
     path('admin/logout/', views.custom_logout_view, name='admin_logout_override'),
+    # Override admin index to immediately redirect to our custom dashboard
+    path('admin/', admin_index_redirect, name='admin_index_override'),
     path('admin/', admin.site.urls),
     path('', views.landing_page_view, name='landing'),
     path('logout/', views.custom_logout_view, name='custom_logout'),
     # Root-level redirector (the core app handles /<str:short_id>/)
     path('', include('core.urls')),
 ]
+
+admin.site.site_header = "Yunus Emre Enstitüsü | QR Yönetimi"
+admin.site.site_title = "YEE QR Admin"
+admin.site.index_title = "QR Yönetim Paneli"
 
 handler404 = 'core.views.custom_404_view'

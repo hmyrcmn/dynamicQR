@@ -13,8 +13,28 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+if load_dotenv:
+    load_dotenv(BASE_DIR / '.env')
+
+
+def env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def env_list(name: str, default: str = '') -> list[str]:
+    value = os.getenv(name, default)
+    return [item.strip() for item in value.split(',') if item.strip()]
 
 
 # Quick-start development settings - unsuitable for production
@@ -24,10 +44,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-!*ipz#38=x@kp5#$ujv6p1^d=@yd)ei-$6-m5z!&&48ljn8z#5')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
+DEBUG = env_bool('DJANGO_DEBUG', True)
 
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
-
+ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', '*')
 
 # Application definition
 
@@ -108,7 +127,7 @@ CACHES = {
 }
 
 # Salt for IP hashing (Privacy)
-IP_HASH_SALT = 'enterprise-level-encryption-salt-2024'
+IP_HASH_SALT = os.getenv('IP_HASH_SALT', 'enterprise-level-encryption-salt-2024')
 
 
 
@@ -144,12 +163,13 @@ USE_I18N = True
 USE_TZ = True
 
 # Security: Authorized domains for QR redirection
-ALLOWED_QR_DOMAINS = ['yee.org.tr', 'gov.tr', 'youtube.com']
+ALLOWED_QR_DOMAINS = env_list('ALLOWED_QR_DOMAINS', 'yee.org.tr,gov.tr,youtube.com')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
@@ -160,44 +180,57 @@ CELERY_TASK_ALWAYS_EAGER = True
 # ==========================================
 # ACTIVE DIRECTORY / LDAP CONFIGURATION
 # ==========================================
-# Wrap in try-except so the app doesn't crash on environments missing python-ldap (like Windows without C++ tools)
-try:
-    import ldap
-    from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+)
 
-    # LDAP Server URL
-    AUTH_LDAP_SERVER_URI = os.getenv('AUTH_LDAP_SERVER_URI', "ldap://DC01.yee.org.tr")
+LDAP_ENABLED = env_bool('LDAP_ENABLED', False)
+if LDAP_ENABLED:
+    try:
+        import ldap
+        from django_auth_ldap.config import LDAPSearch
 
-    # Service account to bind to Active Directory
-    AUTH_LDAP_BIND_DN = os.getenv('AUTH_LDAP_BIND_DN', "CN=LDAP Service,OU=Service Accounts,DC=yee,DC=org,DC=tr")
-    AUTH_LDAP_BIND_PASSWORD = os.getenv('AUTH_LDAP_BIND_PASSWORD', "YeeLdapPass123!")
+        AUTH_LDAP_SERVER_URI = os.getenv('AUTH_LDAP_SERVER_URI', '')
+        AUTH_LDAP_BIND_DN = os.getenv('AUTH_LDAP_BIND_DN', '')
+        AUTH_LDAP_BIND_PASSWORD = os.getenv('AUTH_LDAP_BIND_PASSWORD', '')
+        AUTH_LDAP_START_TLS = env_bool('AUTH_LDAP_START_TLS', False)
+        AUTH_LDAP_ALWAYS_UPDATE_USER = True
+        AUTH_LDAP_CACHE_TIMEOUT = int(os.getenv('AUTH_LDAP_CACHE_TIMEOUT', '3600'))
 
-    # Search location and filter for users
-    AUTH_LDAP_USER_SEARCH = LDAPSearch(
-        "OU=Users,DC=yee,DC=org,DC=tr",
-        ldap.SCOPE_SUBTREE,
-        "(sAMAccountName=%(user)s)"
-    )
+        ldap_network_timeout = int(os.getenv('AUTH_LDAP_NETWORK_TIMEOUT', '5'))
+        AUTH_LDAP_CONNECTION_OPTIONS = {
+            ldap.OPT_REFERRALS: 0,
+            ldap.OPT_NETWORK_TIMEOUT: ldap_network_timeout,
+        }
 
-    # Map AD attributes to CustomUser model fields
-    AUTH_LDAP_USER_ATTR_MAP = {
-        "first_name": "givenName",
-        "last_name": "sn",
-        "email": "mail",
-    }
+        if env_bool('AUTH_LDAP_IGNORE_CERT_ERRORS', False):
+            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
 
-    # Keep users updated on every login
-    AUTH_LDAP_ALWAYS_UPDATE_USER = True
+        auth_ldap_user_base_dn = os.getenv('AUTH_LDAP_USER_SEARCH_BASE_DN', '')
+        auth_ldap_user_filter = os.getenv(
+            'AUTH_LDAP_USER_SEARCH_FILTER',
+            '(sAMAccountName=%(user)s)',
+        )
 
-    # Backend Authentication Routing
-    AUTHENTICATION_BACKENDS = (
-        'django_auth_ldap.backend.LDAPBackend',
-        'django.contrib.auth.backends.ModelBackend',
-    )
-    
-except ImportError:
-    # If python-ldap isn't installed, fallback to standard Django Auth
-    print("WARNING: python-ldap module not found. Active Directory integration is disabled.")
-    AUTHENTICATION_BACKENDS = (
-        'django.contrib.auth.backends.ModelBackend',
-    )
+        if AUTH_LDAP_SERVER_URI and auth_ldap_user_base_dn:
+            AUTH_LDAP_USER_SEARCH = LDAPSearch(
+                auth_ldap_user_base_dn,
+                ldap.SCOPE_SUBTREE,
+                auth_ldap_user_filter,
+            )
+
+            AUTH_LDAP_USER_ATTR_MAP = {
+                'first_name': os.getenv('AUTH_LDAP_ATTR_FIRST_NAME', 'givenName'),
+                'last_name': os.getenv('AUTH_LDAP_ATTR_LAST_NAME', 'sn'),
+                'email': os.getenv('AUTH_LDAP_ATTR_EMAIL', 'mail'),
+            }
+
+            AUTHENTICATION_BACKENDS = (
+                'django_auth_ldap.backend.LDAPBackend',
+                'django.contrib.auth.backends.ModelBackend',
+            )
+        else:
+            print('WARNING: LDAP_ENABLED is true but LDAP env vars are incomplete. Falling back to Django auth.')
+
+    except ImportError:
+        print('WARNING: python-ldap module not found. Active Directory integration is disabled.')

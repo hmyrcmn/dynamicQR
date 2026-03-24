@@ -23,12 +23,16 @@ def verify_frontend_and_routing():
     print("\nTesting QR Redirection alongside Landing:")
     # Ensure a QR code exists
     dept, _ = Department.objects.get_or_create(name="Routing Dept")
-    qr = QRCode.objects.create(
+    dept, _ = Department.objects.get_or_create(name="Routing Dept")
+    qr, created = QRCode.objects.get_or_create(
         short_id="TESTROUT",
-        department=dept,
-        title="Routing Test",
-        destination_url="https://yee.org.tr"
+        defaults={
+            'department': dept,
+            'title': "Routing Test",
+            'destination_url': "https://yee.org.tr"
+        }
     )
+
     
     response_qr = client.get('/TESTROUT/')
     print(f"  Status Code (Redirect): {response_qr.status_code}")

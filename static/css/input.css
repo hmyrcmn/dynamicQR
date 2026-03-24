@@ -1,0 +1,13 @@
+﻿@import "tailwindcss";
+
+@source "../../templates";
+@source "../../core";
+
+@theme {
+    --font-sans: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    --color-apple-blue: #12bcc8;
+    --color-apple-teal: #5adadd;
+    --color-apple-slate: #10202a;
+    --color-apple-gray: #f4f7f8;
+}
